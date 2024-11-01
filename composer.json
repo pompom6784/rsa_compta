@@ -31,7 +31,7 @@
         "slim/psr7": "^1.6",
         "slim/slim": "^4.14",
         "slim/twig-view": "^3.3",
-        "symfony/cache": "^6.4",
+        "symfony/cache": "^7.1",
         "twig/intl-extra": "^3.13",
         "uma/dic": "^2.0"
     },
