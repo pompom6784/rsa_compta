@@ -38,7 +38,7 @@ return function (ContainerBuilder $containerBuilder) {
     }
     // Global Settings Object
     $containerBuilder->addDefinitions([
-        SettingsInterface::class => function () {
+        SettingsInterface::class => function () use ($db) {
             return new Settings([
                 'displayErrorDetails' => true, // Should be set to false in production
                 'logError'            => false,
@@ -54,7 +54,7 @@ return function (ContainerBuilder $containerBuilder) {
                     'metadata_dirs' => [APP_ROOT . '/src/Domain'],
                     'connection' => [
                         'driver' => 'pdo_sqlite',
-                        'path' => APP_ROOT . ($_SESSION['db_path'] ?? '/var/db.sqlite'),
+                        'path' => APP_ROOT . $db,
                     ],
                 ]
             ]);
