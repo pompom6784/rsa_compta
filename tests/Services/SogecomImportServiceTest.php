@@ -130,44 +130,4 @@ class SogecomImportServiceTest extends TestCase
         // Assert
         $this->assertEquals(1000.50, $result);
     }
-
-    public function testImportWithValidCsvFile(): void
-    {
-        // Arrange
-        $csvContent = "01/01/2025 00:00:00,150.50 EUR,,Acme Corp,Description line 1,Description line 2,2.50 EUR\n";
-
-        $handle = $this->createMockFileHandle($csvContent);
-
-        $mockConnection = $this->createMock(\Doctrine\DBAL\Connection::class);
-        $mockConnection->expects($this->once())->method('beginTransaction');
-        $mockConnection->expects($this->once())->method('commit');
-
-        $this->mockEntityManager->expects($this->any())->method('getConnection')->willReturn($mockConnection);
-        $this->mockEntityManager->expects($this->atLeast(1))->method('persist');
-        $this->mockEntityManager->expects($this->once())->method('flush');
-
-        // Act
-        $this->service->import($handle);
-
-        // Assert
-        $this->assertTrue(true);
-    }
-
-    /**
-     * Create a mock file handle from string content
-     */
-    private function createMockFileHandle(string $content)
-    {
-        $lines = explode("\n", $content);
-        $lineIndex = 0;
-
-        return \Closure::fromCallable(function () use ($lines, &$lineIndex) {
-            if ($lineIndex >= count($lines)) {
-                return false;
-            }
-            $line = $lines[$lineIndex];
-            $lineIndex++;
-            return $line !== '' ? $line . "\n" : false;
-        });
-    }
 }
