@@ -92,7 +92,7 @@ abstract class Action
                     $id = $line->getId();
                 }
             }
-            $json = json_encode(['error' => 'An error occurred ' . $message. ' line: ' . $id], JSON_PRETTY_PRINT);
+            $json = json_encode(['error' => 'An error occurred ' . $message . ' line: ' . $id], JSON_PRETTY_PRINT);
         }
         $this->response->getBody()->write($json);
 
