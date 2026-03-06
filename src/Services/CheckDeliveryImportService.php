@@ -59,6 +59,7 @@ final class CheckDeliveryImportService
 
     private function doMath(string $value): float
     {
+        $o = 0;
         eval('$o = ' . preg_replace('/[^0-9\+\-\*\/\(\)\.]/', '', $value) . ';');
         return $o;
     }
