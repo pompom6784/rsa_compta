@@ -1,7 +1,7 @@
 <?php
-
 declare(strict_types=1);
 
+session_start();
 use App\Application\Handlers\HttpErrorHandler;
 use App\Application\Handlers\ShutdownHandler;
 use App\Application\ResponseEmitter\ResponseEmitter;
@@ -55,6 +55,7 @@ $middleware($app);
 // Add Twig-View Middleware
 $twig = Twig::create(__DIR__ . '/../templates', ['cache' => false]);
 $twig->addExtension(new IntlExtension());
+$twig->getEnvironment()->addGlobal('current_year', $_SESSION['current_year'] ?? null);
 $app->add(TwigMiddleware::create($app, $twig));
 
 $container->set('view', $twig);

@@ -38,6 +38,8 @@ return function (App $app) {
         $group->post('/sogecom', ImportController::class . ':sogecom')->setName('sogecom');
         $group->post('/remises', ImportController::class . ':checkDelivery')->setName('checkDelivery');
     });
+    $app->get('/select_year', HomeController::class . ':selectYear')->setName('selectYear');
+    $app->post('/select_year', HomeController::class . ':pickYear')->setName('pickYear');
 
     $app->group('/users', function (Group $group) {
         $group->get('', ListUsersAction::class);
