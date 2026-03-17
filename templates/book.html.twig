@@ -68,7 +68,7 @@
       }
       return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data);
     }
-    new DataTable('#book', {
+    $('#book').DataTable({
       ajax: {
         url: '{{ url_for('lines', {filter: filter})}}',
         type: "POST",
@@ -77,15 +77,15 @@
       fixedHeader: true,
       processing: true,
       serverSide: true,
-      bStateSave: true,
-      fnStateSave: function (oSettings, oData) {
-        localStorage.setItem( 'DataTables', JSON.stringify(oData) );
+      stateSave: true,
+      stateSaveCallback: function (settings, data) {
+        localStorage.setItem( 'DataTables', JSON.stringify(data) );
       },
-      fnStateLoad: function (oSettings) {
+      stateLoadCallback: function (settings) {
         return JSON.parse( localStorage.getItem('DataTables') );
       },
       language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json',
+        url: '/datatable_fr.json',
       },
       order: [[2, 'asc']],
       pageLength: 20,
