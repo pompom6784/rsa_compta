@@ -74,6 +74,7 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(120)">120</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(130)">130</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(400)">400</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setFollowUpNav(400, 200)">400 + 200</button>
               {% endif %}
             </div>
           {% endfor %}
@@ -96,6 +97,12 @@
         $('.breakdown-input-PlaneRenewal input').val(toCurrency({{ line.amount }}));
         $('.breakdown-input-CustomerFees input').val('0,00 €');
       }
+      validateForm();
+    }
+    function setFollowUpNav(amount, followUpNav) {
+      $('.breakdown-input-PlaneRenewal input').val(amount + ',00 €');
+      $('.breakdown-input-FollowUpNav input').val(followUpNav + ',00 €');
+      $('#breakdown_FollowUpNav').prop('checked', true);
       validateForm();
     }
     $(document).ready(function() {
