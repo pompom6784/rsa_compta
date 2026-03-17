@@ -100,9 +100,10 @@
       validateForm();
     }
     function setFollowUpNav(amount, followUpNav) {
+      $('#breakdown_FollowUpNav').prop('checked', true);
+      $('.breakdown-input-FollowUpNav').show();
       $('.breakdown-input-PlaneRenewal input').val(amount + ',00 €');
       $('.breakdown-input-FollowUpNav input').val(followUpNav + ',00 €');
-      $('#breakdown_FollowUpNav').prop('checked', true);
       validateForm();
     }
     $(document).ready(function() {
