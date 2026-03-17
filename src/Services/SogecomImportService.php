@@ -45,17 +45,17 @@ final class SogecomImportService
         $line->setName(mb_convert_encoding($data[3], 'UTF-8', 'UTF-8'));
         $line->setType("Sogecom");
         $line->setAmount($this->toFloat($data[1]));
-        if ($line->getAmount() >= 100) {
-            // Supérieur à 100€, c'est un renouvellement CDN
+        if ($line->getAmount() >= 120) {
+            // Supérieur à 120€, c'est un renouvellement CDN
             $line->setBreakdown([LineBreakdown::PLANE_RENEWAL]);
-            $line->breakdownPlaneRenewal = 100;
-            $line->breakdownCustomerFees = $line->getAmount() - 100;
+            $line->breakdownPlaneRenewal = 120;
+            $line->breakdownCustomerFees = $line->getAmount() - 120;
             if ($line->breakdownCustomerFees > 0) {
                 $line->addBreakdown(LineBreakdown::CUSTOMER_FEES);
             }
             $line->setLabel('Renouvellement CDN');
         } elseif ($line->getAmount() > 0) {
-            // Inférieur à 100€, c'est une contribution RSA
+            // Inférieur à 120€, c'est une contribution RSA
             $line->setBreakdown([LineBreakdown::RSA_NAV_CONTRIBUTION]);
             $line->breakdownRSANavContribution = $line->getAmount();
             $line->setLabel('COTISATION RSA NAV ' . $line->getDate()->format('Y'));

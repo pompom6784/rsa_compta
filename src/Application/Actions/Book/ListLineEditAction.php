@@ -88,10 +88,10 @@ class ListLineEditAction extends Action
                 $newLine->setBreakdown([LineBreakdown::RSA_NAV_CONTRIBUTION]);
                 $newLine->breakdownInternalTransfer = $newLine->getAmount();
             } else {
-                // Supérieur à 100€, c'est un renouvellement d'avion
+                // Supérieur à 120€, c'est un renouvellement d'avion
                 $newLine->setBreakdown([LineBreakdown::PLANE_RENEWAL]);
-                $newLine->breakdownPlaneRenewal = 100;
-                $newLine->breakdownCustomerFees = $newLine->getAmount() - 100;
+                $newLine->breakdownPlaneRenewal = 120;
+                $newLine->breakdownCustomerFees = $newLine->getAmount() - 120;
                 if ($newLine->breakdownCustomerFees > 0) {
                     $newLine->addBreakdown(LineBreakdown::CUSTOMER_FEES);
                 }

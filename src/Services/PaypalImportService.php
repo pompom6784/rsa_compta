@@ -48,16 +48,16 @@ final class PaypalImportService
         $line->setType("PAYPAL");
         $line->setAmount($this->toFloat($data[7]));
         $line->setLabel($data[15]);
-        if ($line->getAmount() >= 100) {
-            // Supérieur à 100€, c'est un renouvellement d'avion
+        if ($line->getAmount() >= 120) {
+            // Supérieur à 120€, c'est un renouvellement d'avion
             $line->setBreakdown([LineBreakdown::PLANE_RENEWAL]);
-            $line->breakdownPlaneRenewal = 100;
-            $line->breakdownCustomerFees = $line->getAmount() - 100;
+            $line->breakdownPlaneRenewal = 120;
+            $line->breakdownCustomerFees = $line->getAmount() - 120;
             if ($line->breakdownCustomerFees > 0) {
                 $line->addBreakdown(LineBreakdown::CUSTOMER_FEES);
             }
         } elseif ($line->getAmount() > 0) {
-            // Inférieur à 100€, c'est une contribution RSA
+            // Inférieur à 120€, c'est une contribution RSA
             $line->setBreakdown([LineBreakdown::RSA_NAV_CONTRIBUTION]);
             $line->breakdownRSANavContribution = $line->getAmount();
         } else {

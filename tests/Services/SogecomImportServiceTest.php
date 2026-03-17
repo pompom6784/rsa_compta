@@ -21,7 +21,7 @@ class SogecomImportServiceTest extends TestCase
 
     public function testCreateLineWithPlaneRenewal(): void
     {
-        // Arrange - amount >= 100
+        // Arrange - amount >= 120
         $data = [
             '01/01/2025 00:00:00',  // date (index 0)
             '150.50 EUR',           // amount (index 1)
@@ -38,13 +38,13 @@ class SogecomImportServiceTest extends TestCase
         // Assert
         $this->assertEquals(150.50, $line->getAmount());
         $this->assertContains(LineBreakdown::PLANE_RENEWAL, $line->getBreakdown());
-        $this->assertEquals(100, $line->breakdownPlaneRenewal);
-        $this->assertEquals(50.50, $line->breakdownCustomerFees);
+        $this->assertEquals(120, $line->breakdownPlaneRenewal);
+        $this->assertEquals(30.50, $line->breakdownCustomerFees);
     }
 
     public function testCreateLineWithSmallAmountIsRSAContribution(): void
     {
-        // Arrange - amount > 0 but < 100
+        // Arrange - amount > 0 but < 120
         $data = [
             '01/01/2025 00:00:00',
             '50.00 EUR',
@@ -68,7 +68,7 @@ class SogecomImportServiceTest extends TestCase
         // Arrange
         $data = [
             '01/01/2025 00:00:00',
-            '100.00 EUR',
+            '120.00 EUR',
             '',
             'Acme Corp',
             'Description',
@@ -90,7 +90,7 @@ class SogecomImportServiceTest extends TestCase
         // Arrange
         $data = [
             '01/01/2025 00:00:00',
-            '100.00 EUR',
+            '120.00 EUR',
             '',
             'Acme Corp',
             'Description',
