@@ -68,7 +68,7 @@
       }
       return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(data);
     }
-    new DataTable('#book', {
+    $('#book').DataTable({
       ajax: {
         url: '{{ url_for('lines', {filter: filter})}}',
         type: "POST",
@@ -85,7 +85,7 @@
         return JSON.parse( localStorage.getItem('DataTables') );
       },
       language: {
-        url: '//cdn.datatables.net/plug-ins/2.0.0/i18n/fr-FR.json',
+        url: '/datatable_fr.json',
       },
       order: [[2, 'asc']],
       pageLength: 20,
