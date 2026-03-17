@@ -72,9 +72,8 @@
               <input type="text" class="form-control breakdown-input" id="breakdown{{ value }}" name="breakdown{{ value }}" value="{{ attribute(line, "breakdown" ~ value)| default(0) | format_currency('EUR', locale='fr') }}">
               {% if value == 'PlaneRenewal' %}
                 <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(120)">120</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(240)">240</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(360)">360</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(480)">480</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(130)">130</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(400)">400</button>
               {% endif %}
             </div>
           {% endfor %}
