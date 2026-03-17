@@ -13,7 +13,3 @@ use Illuminate\Support\Facades\Route;
 | See app/routes.php for the current Slim route definitions.
 |
 */
-
-Route::get('/up', function () {
-    return response()->json(['status' => 'ok']);
-});
