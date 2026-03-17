@@ -77,15 +77,15 @@
       fixedHeader: true,
       processing: true,
       serverSide: true,
-      bStateSave: true,
-      fnStateSave: function (oSettings, oData) {
-        localStorage.setItem( 'DataTables', JSON.stringify(oData) );
+      stateSave: true,
+      stateSaveCallback: function (settings, data) {
+        localStorage.setItem( 'DataTables', JSON.stringify(data) );
       },
-      fnStateLoad: function (oSettings) {
+      stateLoadCallback: function (settings) {
         return JSON.parse( localStorage.getItem('DataTables') );
       },
       language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json',
+        url: '//cdn.datatables.net/plug-ins/2.0.0/i18n/fr-FR.json',
       },
       order: [[2, 'asc']],
       pageLength: 20,
