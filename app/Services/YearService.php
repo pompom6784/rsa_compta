@@ -29,7 +29,9 @@ class YearService
             return $firstYear;
         }
 
-        return (string) date('Y');
+        throw new \RuntimeException(
+            'No accounting database files (var/db_YYYY.sqlite) found; cannot determine current accounting year.'
+        );
     }
 
     /**
