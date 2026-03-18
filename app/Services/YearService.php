@@ -15,8 +15,10 @@ class YearService
 
     /**
      * Get the current accounting year with safe fallback.
+     *
+     * @return string|null The current accounting year, or null if none is available.
      */
-    public function getCurrentYear(): string
+    public function getCurrentYear(): ?string
     {
         $cachedYear = Cache::get(self::CURRENT_YEAR_CACHE_KEY);
         if ($cachedYear && $this->yearExists($cachedYear)) {
@@ -29,8 +31,8 @@ class YearService
             return $firstYear;
         }
 
-        // No valid year found, return a default value, don't throw an error to avoid breaking the app
-        return 'N/A';
+        // No valid year found; return null so callers can handle the absence explicitly.
+        return null;
     }
 
     /**
