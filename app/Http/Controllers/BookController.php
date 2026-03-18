@@ -40,6 +40,16 @@ class BookController extends Controller
         $params = $request->all();
         $qb = $this->buildQueryBuilder();
 
+        // Map DataTables column keys to allowed Line entity fields
+        $columnFieldMap = [
+            'amount'    => 'amount',
+            'date'      => 'date',
+            'type'      => 'type',
+            'label'     => 'label',
+            'name'      => 'name',
+            'breakdown' => 'breakdown',
+        ];
+
         if (!empty($params['search']['value'])) {
             $qb->andWhere($qb->expr()->orX(
                 'l.amount LIKE :search',
@@ -52,26 +62,44 @@ class BookController extends Controller
         }
 
         foreach (($params['columns'] ?? []) as $column) {
-            if (!empty($column['search']['value'])) {
-                match ($column['data']) {
-                    'credit', 'debit' => $qb->andWhere('l.amount LIKE :search_' . $column['data']),
-                    'date'            => $qb->andWhere('l.' . $column['data'] . ' LIKE :search_' . $column['data']),
-                    'breakdown'       => !empty($column['search']['value'])
-                        ? $qb->andWhere('l.breakdown IS NOT NULL')
-                        : $qb->andWhere('l.breakdown IS NULL'),
-                    default           => $qb->andWhere('l.' . $column['data'] . ' LIKE :search_' . $column['data']),
-                };
-                if ($column['data'] !== 'breakdown') {
-                    $qb->setParameter('search_' . $column['data'], '%' . $column['search']['value'] . '%');
-                }
+            if (empty($column['search']['value'])) {
+                continue;
+            }
+
+            $columnKey = $column['data'] ?? null;
+
+            // Skip unknown columns to avoid injecting unexpected DQL identifiers
+            if ($columnKey === null) {
+                continue;
+            }
+
+            match ($columnKey) {
+                'credit', 'debit' => $qb->andWhere('l.amount LIKE :search_' . $columnKey),
+                'date'            => isset($columnFieldMap[$columnKey])
+                    ? $qb->andWhere('l.' . $columnFieldMap[$columnKey] . ' LIKE :search_' . $columnKey)
+                    : null,
+                'breakdown'       => !empty($column['search']['value'])
+                    ? $qb->andWhere('l.breakdown IS NOT NULL')
+                    : $qb->andWhere('l.breakdown IS NULL'),
+                default           => isset($columnFieldMap[$columnKey])
+                    ? $qb->andWhere('l.' . $columnFieldMap[$columnKey] . ' LIKE :search_' . $columnKey)
+                    : null,
+            };
+
+            if ($columnKey !== 'breakdown' && (isset($columnFieldMap[$columnKey]) || $columnKey === 'credit' || $columnKey === 'debit')) {
+                $qb->setParameter('search_' . $columnKey, '%' . $column['search']['value'] . '%');
             }
         }
 
         $qbLines = clone $qb;
-        if (!empty($params['order'])) {
-            $sort  = $params['columns'][$params['order'][0]['column']]['data'];
-            $order = $params['order'][0]['dir'];
-            $qbLines->orderBy('l.' . $sort, $order);
+        if (!empty($params['order']) && isset($params['order'][0]['column'])) {
+            $orderColumnIndex = (int) $params['order'][0]['column'];
+            $sortKey          = $params['columns'][$orderColumnIndex]['data'] ?? null;
+            $order            = $params['order'][0]['dir'] ?? 'asc';
+
+            if ($sortKey !== null && isset($columnFieldMap[$sortKey])) {
+                $qbLines->orderBy('l.' . $columnFieldMap[$sortKey], $order);
+            }
         }
 
         $lines = $qbLines->getQuery()
