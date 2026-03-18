@@ -75,9 +75,7 @@ class BookController extends Controller
 
             match ($columnKey) {
                 'credit', 'debit' => $qb->andWhere('l.amount LIKE :search_' . $columnKey),
-                'date'            => isset($columnFieldMap[$columnKey])
-                    ? $qb->andWhere('l.' . $columnFieldMap[$columnKey] . ' LIKE :search_' . $columnKey)
-                    : null,
+                'date'            => $qb->andWhere('l.date LIKE :search_' . $columnKey),
                 'breakdown'       => !empty($column['search']['value'])
                     ? $qb->andWhere('l.breakdown IS NOT NULL')
                     : $qb->andWhere('l.breakdown IS NULL'),
