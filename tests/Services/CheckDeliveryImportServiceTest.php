@@ -2,7 +2,7 @@
 
 namespace Tests\Services;
 
-use Tests\TestCase;
+use PHPUnit\Framework\TestCase;
 use App\Services\CheckDeliveryImportService;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\MockObject\MockObject;

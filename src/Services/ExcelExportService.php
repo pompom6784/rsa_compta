@@ -24,9 +24,15 @@ final class ExcelExportService
     protected int $from = 0;
     protected int $step = 50;
 
-    public function export()
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        @$this->spreadsheet = IOFactory::load('/var/www/public/template GRAND LIVRE.xlsx');
+        $templatePath = public_path('template GRAND LIVRE.xlsx');
+
+        if (!file_exists($templatePath) || !is_readable($templatePath)) {
+            throw new \RuntimeException('Export template not found or unreadable.');
+        }
+
+        $this->spreadsheet = IOFactory::load($templatePath);
 
         $this->activeWorksheet = $this->spreadsheet->getActiveSheet();
 
@@ -37,7 +43,12 @@ final class ExcelExportService
         $this->insertSums();
 
         $writer = new Xlsx($this->spreadsheet);
-        $writer->save('export.xlsx');
+
+        return response()->streamDownload(function () use ($writer): void {
+            $writer->save('php://output');
+        }, 'export.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     protected function loadLines(): array
