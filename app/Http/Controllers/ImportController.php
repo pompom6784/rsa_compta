@@ -56,10 +56,15 @@ class ImportController extends Controller
         $error = $this->getUploadError($file);
 
         if ($error === '' && $file !== null) {
-            $handle = fopen($file->getRealPath(), 'r');
-            if ($handle !== false) {
-                $this->sogecomImportService->import($handle);
-                fclose($handle);
+            $realPath = $file->getRealPath();
+            if ($realPath !== false) {
+                $handle = fopen($realPath, 'r');
+                if ($handle !== false) {
+                    $this->sogecomImportService->import($handle);
+                    fclose($handle);
+                }
+            } else {
+                $error = "Erreur système : chemin de fichier temporaire invalide";
             }
         }
 
