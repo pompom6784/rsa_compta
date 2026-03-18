@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Services\YearService;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Monolog\Processor\UidProcessor;
-use Psr\Log\LoggerInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
 
             return $logger;
         });
+
+        $this->app->singleton(YearService::class);
     }
 
     /**
@@ -35,6 +38,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $yearService = $this->app->make(YearService::class);
+        $year = $yearService->getCurrentYear();
+
+        Config::set(
+            'database.connections.sqlite.database',
+            base_path("var/db_{$year}.sqlite")
+        );
     }
 }

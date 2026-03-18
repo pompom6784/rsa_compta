@@ -13,20 +13,25 @@ if (!defined('APP_ROOT')) {
 
 return function (ContainerBuilder $containerBuilder) {
 
-    // Read the current database file from /var/current_year.txt
-    $db = null;
-    $currentYearFile = APP_ROOT . '/var/current_year.txt';
-    if (file_exists($currentYearFile)) {
-        $year = file_get_contents($currentYearFile);
-        $db = "/var/db_$year.sqlite";
+    // Resolve the current year via YearService (file cache-based, with safe fallback)
+    $year = null;
+    if (class_exists(\App\Services\YearService::class) && function_exists('app')) {
+        try {
+            $year = app(\App\Services\YearService::class)->getCurrentYear();
+        } catch (\Throwable $e) {
+            // Laravel container not yet available; fall through to file-based fallback
+        }
     }
-    // Pick the first sqlite file in the var directory as default database
-    if (!$db) {
+
+    // Fallback: scan for first available sqlite file (used during early bootstrap or tests)
+    $db = null;
+    if ($year) {
+        $db = "/var/db_$year.sqlite";
+    } else {
         // @phpstan-ignore constant.notFound
         $files = scandir(APP_ROOT . '/var');
         foreach ($files as $file) {
-            if (preg_match('/db_(\d{4})\.sqlite/', $file,
-                $matches)) {
+            if (preg_match('/db_(\d{4})\.sqlite/', $file, $matches)) {
                 $db = "/var/$file";
                 break;
             }
