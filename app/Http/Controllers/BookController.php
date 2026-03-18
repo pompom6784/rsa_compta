@@ -93,7 +93,8 @@ class BookController extends Controller
         if (!empty($params['order']) && isset($params['order'][0]['column'])) {
             $orderColumnIndex = (int) $params['order'][0]['column'];
             $sortKey          = $params['columns'][$orderColumnIndex]['data'] ?? null;
-            $order            = $params['order'][0]['dir'] ?? 'asc';
+            $orderDir         = strtoupper($params['order'][0]['dir'] ?? 'ASC');
+            $order            = in_array($orderDir, ['ASC', 'DESC'], true) ? $orderDir : 'ASC';
 
             if ($sortKey !== null && isset($columnFieldMap[$sortKey])) {
                 $qbLines->orderBy('l.' . $columnFieldMap[$sortKey], $order);
