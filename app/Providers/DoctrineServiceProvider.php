@@ -7,6 +7,7 @@ namespace App\Providers;
 use Doctrine\Common\Cache\Psr6\DoctrineProvider;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\Setup;
+use App\Services\YearService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -23,10 +24,9 @@ class DoctrineServiceProvider extends ServiceProvider
             /** @var \Illuminate\Config\Repository $config */
             $config = $app['config'];
 
-            $devMode     = (bool) $config->get('doctrine.dev_mode', true);
-            $cacheDir    = (string) $config->get('doctrine.cache_dir', storage_path('framework/doctrine'));
-            $metaDirs    = (array) $config->get('doctrine.metadata_dirs', [base_path('src/Domain')]);
-            $connection  = (array) $config->get('doctrine.connection', []);
+            $devMode  = (bool) $config->get('doctrine.dev_mode', true);
+            $cacheDir = (string) $config->get('doctrine.cache_dir', storage_path('framework/doctrine'));
+            $metaDirs = (array) $config->get('doctrine.metadata_dirs', [base_path('src/Domain')]);
 
             $cache = $devMode
                 ? DoctrineProvider::wrap(new ArrayAdapter())
@@ -39,13 +39,14 @@ class DoctrineServiceProvider extends ServiceProvider
                 $cache
             );
 
-            // Preserve the current_year session variable used by the navbar template
-            $dbPath = $connection['path'] ?? null;
-            if ($dbPath !== null && session_status() === PHP_SESSION_ACTIVE) {
-                if (preg_match('/db_(\d{4})\.sqlite$/', basename((string) $dbPath), $matches)) {
-                    $_SESSION['current_year'] = $matches[1];
-                }
-            }
+            /** @var YearService $yearService */
+            $yearService = $app->make(YearService::class);
+            $year        = $yearService->getCurrentYear();
+
+            $connection = [
+                'driver' => 'pdo_sqlite',
+                'path'   => base_path("var/db_{$year}.sqlite"),
+            ];
 
             return EntityManager::create($connection, $ormConfig);
         });

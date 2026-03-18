@@ -26,7 +26,7 @@ final class ExcelExportService
 
     public function export()
     {
-        @$this->spreadsheet = IOFactory::load('/var/www/public/template GRAND LIVRE.xlsx');
+        @$this->spreadsheet = IOFactory::load(public_path('template GRAND LIVRE.xlsx'));
 
         $this->activeWorksheet = $this->spreadsheet->getActiveSheet();
 
@@ -37,7 +37,7 @@ final class ExcelExportService
         $this->insertSums();
 
         $writer = new Xlsx($this->spreadsheet);
-        $writer->save('export.xlsx');
+        $writer->save(public_path('export.xlsx'));
     }
 
     protected function loadLines(): array
