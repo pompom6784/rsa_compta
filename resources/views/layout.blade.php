@@ -4,7 +4,7 @@
 
 <head>
 
-<title>Grand Livre RSA</title>
+<title>Grand Livre RSANav</title>
 
 <meta charset="utf-8">
 
@@ -28,7 +28,9 @@
 
 @include('navbar')
 
-@yield('container', '<div class="container">')
+@section('container')
+  <div class="container">
+@show
 
 @yield('body')
 

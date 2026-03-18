@@ -1,6 +1,6 @@
 {
     "name": "rsa-compta/app",
-    "description": "RSA Compta accounting application",
+    "description": "RSANav Compta accounting application",
     "license": "MIT",
     "require": {
         "php": "^8.3",
