@@ -158,11 +158,9 @@ class BookController extends Controller
         return response(view('edit_line', $vars));
     }
 
-    public function excel(): RedirectResponse
+    public function excel(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $this->excelExportService->export();
-
-        return redirect('/export.xlsx');
+        return $this->excelExportService->export();
     }
 
     private function convertCheckDelivery(Request $request, Line $line): RedirectResponse
