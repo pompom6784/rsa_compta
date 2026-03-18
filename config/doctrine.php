@@ -37,6 +37,15 @@ if ($db === null) {
     }
 }
 
+if ($db === null) {
+    throw new RuntimeException(
+        sprintf(
+            'Doctrine SQLite database could not be resolved. Expected "current_year.txt" or at least one "db_YYYY.sqlite" in "%s".',
+            $varDir
+        )
+    );
+}
+
 return [
 
     /*
