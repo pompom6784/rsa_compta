@@ -8,7 +8,7 @@ use App\Services\YearService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\View\View;
+use Illuminate\Http\Response;
 
 class YearController extends Controller
 {
@@ -16,12 +16,12 @@ class YearController extends Controller
     {
     }
 
-    public function selectYear(): View
+    public function selectYear(): Response
     {
-        return view('select_year', [
+        return response(view('select_year', [
             'years' => $this->yearService->getAvailableYears(),
             'current_year' => $this->yearService->getCurrentYear(),
-        ]);
+        ]));
     }
 
     public function pickYear(Request $request): RedirectResponse
