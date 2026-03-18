@@ -35,10 +35,15 @@ class ImportController extends Controller
         $error = $this->getUploadError($file);
 
         if ($error === '' && $file !== null) {
-            $handle = fopen($file->getRealPath(), 'r');
-            if ($handle !== false) {
-                $this->paypalImportService->import($handle);
-                fclose($handle);
+            $realPath = $file->getRealPath();
+            if ($realPath !== false) {
+                $handle = fopen($realPath, 'r');
+                if ($handle !== false) {
+                    $this->paypalImportService->import($handle);
+                    fclose($handle);
+                }
+            } else {
+                $error = "Erreur système : chemin de fichier temporaire invalide";
             }
         }
 
@@ -67,10 +72,15 @@ class ImportController extends Controller
         $error = $this->getUploadError($file);
 
         if ($error === '' && $file !== null) {
-            $handle = fopen($file->getRealPath(), 'r');
-            if ($handle !== false) {
-                $this->sgImportService->import($handle);
-                fclose($handle);
+            $realPath = $file->getRealPath();
+            if ($realPath !== false) {
+                $handle = fopen($realPath, 'r');
+                if ($handle !== false) {
+                    $this->sgImportService->import($handle);
+                    fclose($handle);
+                }
+            } else {
+                $error = "Erreur système : chemin de fichier temporaire invalide";
             }
         }
 
@@ -79,6 +89,10 @@ class ImportController extends Controller
 
     public function checkDelivery(Request $request): Response
     {
+        $request->validate([
+            'importCheckDelivery' => 'required|file|mimes:xlsx,xlsm|max:10240',
+        ]);
+
         $file  = $request->file('importCheckDelivery');
         $error = $this->getUploadError($file);
 
@@ -86,9 +100,18 @@ class ImportController extends Controller
             return response(view('imports', ['error' => $error]));
         }
 
+        if ($file === null) {
+            return response(view('imports', ['error' => "Aucun fichier n'a été envoyé"]));
+        }
+
+        $realPath = $file->getRealPath();
+        if ($realPath === false) {
+            return response(view('imports', ['error' => "Erreur système : chemin de fichier temporaire invalide"]));
+        }
+
         $reader = IOFactory::createReader('Xlsx');
         $reader->setReadDataOnly(true);
-        $spreadsheet = $reader->load($file->getRealPath());
+        $spreadsheet = $reader->load($realPath);
         $this->checkDeliveryImportService->import($spreadsheet);
 
         return response(view('imports'));
