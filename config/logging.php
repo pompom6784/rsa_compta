@@ -68,7 +68,6 @@ return [
                 'stream' => isset($_ENV['docker'])
                     ? 'php://stdout'
                     : storage_path('logs/app.log'),
-                'level' => Level::Debug,
             ],
         ],
 
