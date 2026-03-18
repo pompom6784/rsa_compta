@@ -11,7 +11,6 @@ use App\Infrastructure\Persistence\Line\DbLineRepository;
 use Psr\Log\LoggerInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
-use Slim\Routing\RouteContext;
 
 class ListLineEditAction extends Action
 {
@@ -28,10 +27,7 @@ class ListLineEditAction extends Action
     {
         $line = $this->lineRepository->findLineOfId($this->args['id']);
         if (!$line) {
-            $routeParser = RouteContext::fromRequest($this->request)->getRouteParser();
-            $url = $routeParser->urlFor('book');
-
-            return $this->redirect($url);
+            return $this->redirect('/livre');
         }
         if (!empty($this->request->getParsedBody()['check_delivery'])) {
             return $this->convertCheckDelivery($line);
@@ -46,10 +42,8 @@ class ListLineEditAction extends Action
                 $line->__set($key, self::parseCurrency($this->request->getParsedBody()[$key]));
             }
             $this->lineRepository->save($line);
-            $routeParser = RouteContext::fromRequest($this->request)->getRouteParser();
-            $url = $routeParser->urlFor('book');
 
-            return $this->redirect($url);
+            return $this->redirect('/livre');
         }
         $vars = [
             'line' => $line,
@@ -102,10 +96,7 @@ class ListLineEditAction extends Action
         $checkDelivery->setConverted(true);
         $this->checkDeliveryRepository->save($checkDelivery);
 
-        $routeParser = RouteContext::fromRequest($this->request)->getRouteParser();
-        $url = $routeParser->urlFor('book');
-
-        return $this->redirect($url);
+        return $this->redirect('/livre');
     }
 
     protected static function parseCurrency(?string $currency): float

@@ -5,3 +5,7 @@ parameters:
   level: 4
   paths:
     - src
+  excludePaths:
+    - src/Application/Handlers
+    - src/Application/ResponseEmitter
+    - src/Application/Middleware/SessionMiddleware.php

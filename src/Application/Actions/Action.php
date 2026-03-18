@@ -8,8 +8,6 @@ use App\Domain\DomainException\DomainRecordNotFoundException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
-use Slim\Exception\HttpBadRequestException;
-use Slim\Exception\HttpNotFoundException;
 
 abstract class Action
 {
@@ -27,8 +25,8 @@ abstract class Action
     }
 
     /**
-     * @throws HttpNotFoundException
-     * @throws HttpBadRequestException
+     * @throws \RuntimeException
+     * @throws \InvalidArgumentException
      */
     public function __invoke(Request $request, Response $response, array $args): Response
     {
@@ -39,13 +37,13 @@ abstract class Action
         try {
             return $this->action();
         } catch (DomainRecordNotFoundException $e) {
-            throw new HttpNotFoundException($this->request, $e->getMessage());
+            throw new \RuntimeException($e->getMessage(), 404, $e);
         }
     }
 
     /**
      * @throws DomainRecordNotFoundException
-     * @throws HttpBadRequestException
+     * @throws \InvalidArgumentException
      */
     abstract protected function action(): Response;
 
@@ -59,12 +57,12 @@ abstract class Action
 
     /**
      * @return mixed
-     * @throws HttpBadRequestException
+     * @throws \InvalidArgumentException
      */
     protected function resolveArg(string $name)
     {
         if (!isset($this->args[$name])) {
-            throw new HttpBadRequestException($this->request, "Could not resolve argument `{$name}`.");
+            throw new \InvalidArgumentException("Could not resolve argument `{$name}`.");
         }
 
         return $this->args[$name];
