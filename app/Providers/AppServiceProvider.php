@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(LoggerInterface::class, function (): Logger {
+        $this->app->singleton('logger.app', function (): Logger {
             $logPath = isset($_ENV['docker'])
                 ? 'php://stdout'
                 : storage_path('logs/app.log');
