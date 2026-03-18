@@ -18,8 +18,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | SQLite is used as the primary database. The actual database file path
-    | is determined dynamically via the Doctrine configuration based on the
-    | year selection stored in /var/current_year.txt.
+    | is set dynamically at boot time by AppServiceProvider using YearService,
+    | which reads the selected accounting year from the file cache.
     |
     */
 

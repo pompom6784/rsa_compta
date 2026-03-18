@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\YearController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,3 +14,7 @@ use Illuminate\Support\Facades\Route;
 | See app/routes.php for the current Slim route definitions.
 |
 */
+
+Route::get('/select_year', [YearController::class, 'selectYear'])->name('selectYear');
+Route::post('/select_year', [YearController::class, 'pickYear'])->name('pickYear');
+
