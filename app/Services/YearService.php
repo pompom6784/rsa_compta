@@ -74,7 +74,11 @@ class YearService
      */
     public function yearExists(string $year): bool
     {
-        return in_array($year, $this->getAvailableYears());
+        if (!preg_match('/^\d{4}$/', $year)) {
+            return false;
+        }
+
+        return in_array($year, $this->getAvailableYears(), true);
     }
 
     /**
