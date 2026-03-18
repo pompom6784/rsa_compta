@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Domain\User\UserRepository;
 use App\Infrastructure\Persistence\CheckDelivery\DbCheckDeliveryRepository;
 use App\Infrastructure\Persistence\Line\DbLineRepository;
-use App\Infrastructure\Persistence\User\InMemoryUserRepository;
 use App\Services\CheckDeliveryImportService;
 use App\Services\ExcelExportService;
 use App\Services\PaypalImportService;
@@ -52,9 +50,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DbCheckDeliveryRepository::class, function ($app): DbCheckDeliveryRepository {
             return new DbCheckDeliveryRepository($app->make(EntityManager::class));
         });
-
-        $this->app->singleton(InMemoryUserRepository::class);
-        $this->app->bind(UserRepository::class, InMemoryUserRepository::class);
 
         // Services
         $this->app->singleton(PaypalImportService::class, function ($app): PaypalImportService {
