@@ -50,23 +50,44 @@ final class SGImportService
         $line->amount = $this->toFloat($data[2] == "" ? $data[3] : $data[2]);
         $line->label = $data[6];
 
+        // Capture the first raw CSV line before reading continuation lines
+        $rawLines = [$fileLine];
+
         $description = $data[1] . "\n";
 
         $fileLine = fgets($handle);
         $data = str_getcsv($fileLine, ";");
         while ($data[0] == '' && !empty($data[1])) {
+            $rawLines[] = $fileLine;
             $description .= $data[1] . "\n";
             $fileLine = fgets($handle);
             $data = str_getcsv($fileLine, ";");
         }
 
         $line->description = $description;
+        $line->import_hash = $this->computeHash($rawLines);
+
+        // Skip if a line with the same raw-data hash was already imported
+        if (Line::where('import_hash', $line->import_hash)->exists()) {
+            return;
+        }
 
         $line = $this->qualifyLine($line);
 
         if ($line) {
             $line->save();
         }
+    }
+
+    /**
+     * Compute a SHA-256 hash over all raw CSV lines that make up one logical
+     * SG entry (the primary line plus any continuation lines).
+     *
+     * @param string[] $rawLines
+     */
+    private function computeHash(array $rawLines): string
+    {
+        return hash('sha256', implode('', $rawLines));
     }
 
     private function qualifyLine(Line $line): Line | null
