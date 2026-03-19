@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Doctrine\Common\Cache\Psr6\DoctrineProvider;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Tools\Setup;
+use Doctrine\ORM\ORMSetup;
 use App\Services\YearService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -29,26 +29,25 @@ class DoctrineServiceProvider extends ServiceProvider
             $metaDirs = (array) $config->get('doctrine.metadata_dirs', [base_path('src/Domain')]);
 
             $cache = $devMode
-                ? DoctrineProvider::wrap(new ArrayAdapter())
-                : DoctrineProvider::wrap(new FilesystemAdapter(directory: $cacheDir));
+                ? new ArrayAdapter()
+                : new FilesystemAdapter(directory: $cacheDir);
 
-            $ormConfig = Setup::createAttributeMetadataConfiguration(
-                $metaDirs,
-                $devMode,
-                null,
-                $cache
+            $ormConfig = ORMSetup::createAttributeMetadataConfiguration(
+                paths: $metaDirs,
+                isDevMode: $devMode,
+                cache: $cache,
             );
 
             /** @var YearService $yearService */
             $yearService = $app->make(YearService::class);
             $year        = $yearService->getCurrentYear();
 
-            $connection = [
+            $connection = DriverManager::getConnection([
                 'driver' => 'pdo_sqlite',
                 'path'   => base_path("var/db_{$year}.sqlite"),
-            ];
+            ], $ormConfig);
 
-            return EntityManager::create($connection, $ormConfig);
+            return new EntityManager($connection, $ormConfig);
         });
     }
 
