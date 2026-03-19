@@ -210,7 +210,7 @@ class BookController extends Controller
             $q->whereNull('breakdown');
             $q->orWhere(function ($q2) use ($ignoredBreakdowns) {
                 foreach ($ignoredBreakdowns as $breakdown) {
-                    $q2->where('breakdown', 'not like', '%' . $breakdown . '%');
+                    $q2->where('breakdown', 'not like', '%"' . $breakdown . '"%');
                 }
             });
         });
