@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property-read \Illuminate\Support\CarbonImmutable $date
- * @property-write \DateTimeInterface|\Illuminate\Support\CarbonImmutable $date
+ * @property-read \Carbon\CarbonImmutable $date
+ * @property-write \DateTimeInterface|\Carbon\CarbonImmutable $date
  * @property float $amount
  * @property bool $converted
  */
