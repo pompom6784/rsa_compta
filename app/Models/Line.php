@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SimpleArrayCast;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
@@ -68,7 +69,7 @@ class Line extends Model
     protected $casts = [
         'date'                           => 'immutable_datetime',
         'amount'                         => 'float',
-        'breakdown'                      => 'array',
+        'breakdown'                      => SimpleArrayCast::class,
         'breakdown_plane_renewal'        => 'float',
         'breakdown_customer_fees'        => 'float',
         'breakdown_rsa_contribution'     => 'float',

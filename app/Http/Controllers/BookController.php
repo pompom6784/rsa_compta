@@ -179,7 +179,7 @@ class BookController extends Controller
 
             if (str_starts_with((string) $checkDeliveryLine->label, 'COTISATION')) {
                 $newLine->breakdown = [LineBreakdown::RSA_NAV_CONTRIBUTION];
-                $newLine->breakdown_internal_transfer = $newLine->amount;
+                $newLine->breakdown_rsa_nav_contribution = $newLine->amount;
             } else {
                 $newLine->breakdown = [LineBreakdown::PLANE_RENEWAL];
                 $newLine->breakdown_plane_renewal  = 120;
@@ -210,7 +210,7 @@ class BookController extends Controller
             $q->whereNull('breakdown');
             $q->orWhere(function ($q2) use ($ignoredBreakdowns) {
                 foreach ($ignoredBreakdowns as $breakdown) {
-                    $q2->where('breakdown', 'not like', '%"' . $breakdown . '"%');
+                    $q2->where('breakdown', 'not like', '%' . $breakdown . '%');
                 }
             });
         });

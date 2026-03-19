@@ -54,7 +54,7 @@ final class ExcelExportService
                 $q->whereNull('breakdown');
                 $q->orWhere(function ($q2) use ($breakdowns) {
                     foreach ($breakdowns as $breakdown) {
-                        $q2->where('breakdown', 'not like', '%"' . $breakdown . '"%');
+                        $q2->where('breakdown', 'not like', '%' . $breakdown . '%');
                     }
                 });
             })
