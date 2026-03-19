@@ -16,12 +16,19 @@ class DbCheckDeliveryLineRepository implements CheckDeliveryLineRepository
 
     public function countAll(): int
     {
-        return $this->entityManager->getRepository(CheckDeliveryLine::class)->count([]);
+        return $this->entityManager->getRepository(CheckDeliveryLine::class)->count();
     }
 
     public function countBy(array $criteria): int
     {
-        return $this->entityManager->getRepository(CheckDeliveryLine::class)->count($criteria);
+        $qb = $this->entityManager->getRepository(CheckDeliveryLine::class)->createQueryBuilder('cdl');
+        $qb->select('COUNT(cdl.id)');
+        foreach ($criteria as $field => $value) {
+            $qb->andWhere("cdl.{$field} = :{
+field}")
+               ->setParameter($field, $value);
+        }
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     public function getQueryBuilder()
