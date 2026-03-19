@@ -17,7 +17,8 @@ final class CheckDeliveryImportService
 
         $worksheet = $spreadsheet->getActiveSheet();
         $date = NumberFormat::toFormattedString($worksheet->getCell('B15')->getValue(), 'YYYY-MM-DD');
-        $checkDelivery->date = \DateTimeImmutable::createFromFormat("Y-m-d", $date);
+        $checkDelivery->date = \DateTimeImmutable::createFromFormat("Y-m-d", $date)
+            ?: throw new \RuntimeException('Invalid date: ' . $date);
         $checkDelivery->amount = 0;
         $checkDelivery->save();
 

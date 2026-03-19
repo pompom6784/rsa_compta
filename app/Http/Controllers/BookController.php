@@ -75,9 +75,7 @@ class BookController extends Controller
             match ($columnKey) {
                 'credit', 'debit' => $qb->where('amount', 'like', '%' . $searchVal . '%'),
                 'date'            => $qb->where('date', 'like', '%' . $searchVal . '%'),
-                'breakdown'       => !empty($searchVal)
-                    ? $qb->whereNotNull('breakdown')
-                    : $qb->whereNull('breakdown'),
+                'breakdown'       => $qb->whereNotNull('breakdown'),
                 default           => isset($columnFieldMap[$columnKey])
                     ? $qb->where($columnFieldMap[$columnKey], 'like', '%' . $searchVal . '%')
                     : null,
@@ -165,6 +163,10 @@ class BookController extends Controller
     private function convertCheckDelivery(Request $request, Line $line): RedirectResponse
     {
         $checkDelivery = CheckDelivery::find((int) $request->input('check_delivery'));
+
+        if (!$checkDelivery) {
+            return redirect()->route('book');
+        }
 
         foreach ($checkDelivery->lines as $checkDeliveryLine) {
             $newLine = new Line();

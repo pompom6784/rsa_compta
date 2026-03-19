@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property int                             $id
  * @property string|null                     $type
- * @property \Illuminate\Support\Carbon      $date
+ * @property-read \Illuminate\Support\CarbonImmutable $date
+ * @property-write \DateTimeInterface|\Illuminate\Support\CarbonImmutable $date
  * @property string|null                     $name
  * @property string|null                     $label
  * @property float                           $amount

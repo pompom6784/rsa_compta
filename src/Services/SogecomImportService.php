@@ -34,7 +34,8 @@ final class SogecomImportService
     {
         $line = new Line();
         $timezone = new \DateTimeZone('Europe/Paris');
-        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone);
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone)
+            ?: throw new \RuntimeException('Invalid date: ' . $data[0]);
         $line->name = mb_convert_encoding($data[3], 'UTF-8', 'UTF-8');
         $line->type = "Sogecom";
         $line->amount = $this->toFloat($data[1]);
@@ -67,7 +68,8 @@ final class SogecomImportService
     {
         $line = new Line();
         $timezone = new \DateTimeZone('Europe/Paris');
-        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone);
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone)
+            ?: throw new \RuntimeException('Invalid date: ' . $data[0]);
         $line->type = "Sogecom";
         $line->name = $data[3];
         $line->amount = $this->toFloat($data[6]) * -1;

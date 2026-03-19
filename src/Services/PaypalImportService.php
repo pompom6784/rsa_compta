@@ -36,7 +36,8 @@ final class PaypalImportService
     {
         $line = new Line();
         $timezone = new \DateTimeZone($data[2] ?? 'Europe/Paris');
-        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone);
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone)
+            ?: throw new \RuntimeException('Invalid date: ' . $data[0]);
         $line->name = $data[3];
         $line->type = "PAYPAL";
         $line->amount = $this->toFloat($data[7]);
@@ -67,7 +68,8 @@ final class PaypalImportService
     {
         $line = new Line();
         $timezone = new \DateTimeZone($data[2] ?? 'Europe/Paris');
-        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone);
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone)
+            ?: throw new \RuntimeException('Invalid date: ' . $data[0]);
         $line->type = "PAYPAL";
         $line->name = $data[3];
         $line->amount = $this->toFloat($data[8]);
