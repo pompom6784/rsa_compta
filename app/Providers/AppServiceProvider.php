@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(YearService::class);
 
         $this->app->singleton(LoggerInterface::class, function (): LoggerInterface {
-            return Log::channel()->getLogger();
+            return Log::channel();
         });
 
         // Repositories

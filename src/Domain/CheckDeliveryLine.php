@@ -19,7 +19,7 @@ final class CheckDeliveryLine implements \JsonSerializable
     private string $checkNumber;
 
     #[Column(type: 'string', length: 255, nullable: true, options: ['collation' => 'nocase'])]
-    private ?string $name;
+    private string $name;
 
     #[Column(type: 'string', length: 255, nullable: true)]
     private ?string $label;
@@ -49,7 +49,7 @@ final class CheckDeliveryLine implements \JsonSerializable
         $this->name = $name;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
