@@ -111,7 +111,7 @@
         {data: 'type'},
         {data: 'date',
           render: function(data, type, row) {
-            const date = new Date(data.date);
+            const date = new Date(data);
             return dateFns.format(date, 'DD/MM/YYYY');
           }
         },
@@ -134,89 +134,89 @@
         {
           data: 'breakdown',
           render: function (data) {
-            return data.length > 0 ? '<span style="color: green;">&check;</span>' : '<span style="color: red;">&cross;</span>';
+            return data?.length > 0 ? '<span style="color: green;">&check;</span>' : '<span style="color: red;">&cross;</span>';
           }
         },
         {
-          data: 'breakdownPlaneRenewal',
+          data: 'breakdown_plane_renewal',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownCustomerFees',
+          data: 'breakdown_customer_fees',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownRSANavContribution',
+          data: 'breakdown_rsa_nav_contribution',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownRSAContribution',
+          data: 'breakdown_rsa_contribution',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownFollowUpNav',
+          data: 'breakdown_follow_up_nav',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownPenRefund',
+          data: 'breakdown_pen_refund',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownMeeting',
+          data: 'breakdown_meeting',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownPaypalFees',
+          data: 'breakdown_paypal_fees',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownSogecomFees',
+          data: 'breakdown_sogecom_fees',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownOsac',
+          data: 'breakdown_osac',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownOtherFees',
+          data: 'breakdown_other_fees',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownDonation',
+          data: 'breakdown_donation',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownVibrationDebit',
+          data: 'breakdown_vibration_debit',
           render : function (data) {
             return moneyFormat(data);
           }
         },
         {
-          data: 'breakdownVibrationCredit',
+          data: 'breakdown_vibration_credit',
           render : function (data) {
             return moneyFormat(data);
           }

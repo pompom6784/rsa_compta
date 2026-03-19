@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * @property int                             $id
  * @property string|null                     $type
- * @property \Illuminate\Support\Carbon      $date
+ * @property-read \Carbon\CarbonImmutable $date
+ * @property-write \DateTimeInterface|\Carbon\CarbonImmutable $date
  * @property string|null                     $name
  * @property string|null                     $label
  * @property float                           $amount
@@ -37,6 +38,8 @@ class Line extends Model
     protected $table = 'lines';
 
     public $timestamps = false;
+
+    protected $dateFormat = 'Y-m-d H:i:s';
 
     protected $fillable = [
         'type',

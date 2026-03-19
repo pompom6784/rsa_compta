@@ -1,52 +1,52 @@
 @extends('layout')
 
 @section('body')
-  <form method="post" class="line-form" action="{{ route('line', ['id' => $line->getId()]) }}">
+  <form method="post" class="line-form" action="{{ route('line', ['id' => $line->id]) }}">
     @csrf
     @method('POST')
     <div class="mb-3">
       <label for="date" class="form-label">Date</label>
-      <div class="form-control">{{ $line->getDate()->format('Y-m-d') }}</div>
+      <div class="form-control">{{ $line->date->format('Y-m-d') }}</div>
     </div>
     <div class="mb-3">
       <label for="name" class="form-label">Banque</label>
       <select class="form-select" name="type">
-        <option @selected(!$line->getType())>- Choisir -</option>
-        <option value="PAYPAL" @selected($line->getType() === 'PAYPAL')>PAYPAL</option>
-        <option value="Sogecom" @selected($line->getType() === 'Sogecom')>Sogecom</option>
-        <option value="VRT" @selected($line->getType() === 'VRT')>Virement</option>
-        <option value="CHQ" @selected($line->getType() === 'CHQ')>Chèque</option>
+        <option @selected(!$line->type)>- Choisir -</option>
+        <option value="PAYPAL" @selected($line->type === 'PAYPAL')>PAYPAL</option>
+        <option value="Sogecom" @selected($line->type === 'Sogecom')>Sogecom</option>
+        <option value="VRT" @selected($line->type === 'VRT')>Virement</option>
+        <option value="CHQ" @selected($line->type === 'CHQ')>Chèque</option>
       </select>
     </div>
     <div class="mb-3">
       <label for="name" class="form-label">Nom</label>
-      <input type="text" class="form-control" id="name" name="name" value="{{ $line->getName() }}">
+      <input type="text" class="form-control" id="name" name="name" value="{{ $line->name }}">
     </div>
     <div class="mb-3">
       <label for="label" class="form-label">Libellé</label>
-      <input type="text" class="form-control" id="label" name="label" value="{{ $line->getLabel() }}">
+      <input type="text" class="form-control" id="label" name="label" value="{{ $line->label }}">
     </div>
     <div class="mb-3">
       <label for="amount" class="form-label">Montant</label>
       <input type="text" class="form-control" id="amount" name="amount" readonly disabled
-             value="{{ number_format($line->getAmount(), 2, ',', ' ') }} €">
+             value="{{ number_format($line->amount, 2, ',', ' ') }} €">
     </div>
     <div class="mb-3">
       <label for="description" class="form-label">Description</label>
-      <textarea rows="5" class="form-control" id="description" name="description">{{ $line->getDescription() }}</textarea>
+      <textarea rows="5" class="form-control" id="description" name="description">{{ $line->description }}</textarea>
     </div>
 
-    @if ($line->getLabel() === 'REMISES DE CHEQUES')
+    @if ($line->label === 'REMISES DE CHEQUES')
       <div class="mb-3">
         <label for="description" class="form-label">Remises</label>
         <select class="form-control" size="5" name="check_delivery">
           @foreach ($check_deliveries as $delivery)
             <option
-              value="{{ $delivery->getId() }}"
-              data-amount="{{ $delivery->getAmount() }}"
-              data-count="{{ $delivery->getLines()->count() }}"
+              value="{{ $delivery->id }}"
+              data-amount="{{ $delivery->amount }}"
+              data-count="{{ $delivery->lines->count() }}"
             >
-              {{ $delivery->getAmount() }} € / {{ $delivery->getDate()->format('Y-m-d') }} / {{ $delivery->getLines()->count() }} chèques
+              {{ $delivery->amount }} € / {{ $delivery->date->format('Y-m-d') }} / {{ $delivery->lines->count() }} chèques
             </option>
           @endforeach
         </select>
@@ -62,7 +62,7 @@
                 <input class="form-check-input breakdown_toggle" type="checkbox"
                        value="{{ $value }}" name="breakdown[{{ $value }}]"
                        id="breakdown_{{ $value }}"
-                       @checked(in_array($value, $line->getBreakdown())) />
+                       @checked(in_array($value, $line->breakdown ?? [])) />
                 <label class="form-check-label" for="breakdown_{{ $value }}">
                   {{ $name }}
                 </label>
@@ -75,11 +75,11 @@
         <div class="row">
           @foreach ($breakdowns as $value => $name)
             <div class="col-sm-3 breakdown-input-{{ $value }}"
-                 @unless(in_array($value, $line->getBreakdown())) style="display: none" @endunless>
+                 @unless(in_array($value, $line->breakdown ?? [])) style="display: none" @endunless>
               <label for="breakdown{{ $value }}" class="form-label">{{ $name }}</label>
               <input type="text" class="form-control breakdown-input"
                      id="breakdown{{ $value }}" name="breakdown{{ $value }}"
-                     value="{{ number_format((float) ($line->{'breakdown' . $value} ?? 0), 2, ',', ' ') }} €">
+                     value="{{ number_format((float) ($line->{$columnKeys[$value]} ?? 0), 2, ',', ' ') }} €">
               @if ($value === 'PlaneRenewal')
                 <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(120)">120</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm" onClick="setRenewal(130)">130</button>
@@ -95,7 +95,7 @@
   </form>
 
   <script type="text/javascript">
-    const lineAmount = {{ $line->getAmount() }};
+    const lineAmount = {{ $line->amount }};
     const checkCount = {{ $check_count ?? 0 }};
 
     function toCurrency(amount) {

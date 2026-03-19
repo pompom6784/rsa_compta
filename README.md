@@ -1,47 +1,96 @@
-# Slim Framework 4 Skeleton Application
+# RSA Compta
 
-[![Coverage Status](https://coveralls.io/repos/github/slimphp/Slim-Skeleton/badge.svg?branch=master)](https://coveralls.io/github/slimphp/Slim-Skeleton?branch=master)
+An accounting application that ingests XLS/CSV files from multiple sources, stores data in per-year SQLite databases, and produces Excel exports matching the original format.
 
-Use this skeleton application to quickly setup and start working on a new Slim Framework 4 application. This application uses the latest Slim 4 with Slim PSR-7 implementation and PHP-DI container implementation. It also uses the Monolog logger.
+**Key technologies:** PHP 8.3+ · Laravel 12 (Eloquent ORM, Artisan) · SQLite (one database file per accounting year) · PhpSpreadsheet
 
-This skeleton application was built for Composer. This makes setting up a new Slim Framework application quick and easy.
+---
 
-## Install the Application
+## Requirements
 
-Run this command from the directory in which you want to install your new Slim Framework application. You will require PHP 7.4 or newer.
+- PHP 8.3 or newer
+- Composer
+- Docker (optional, for the containerised setup)
+
+---
+
+## Installation
 
 ```bash
-composer create-project slim/slim-skeleton [my-app-name]
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Replace `[my-app-name]` with the desired directory name for your new application. You'll want to:
+---
 
-* Point your virtual host document root to your new application's `public/` directory.
-* Ensure `logs/` is web writable.
+## Database setup
 
-To run the application in development, you can run these commands
+Each accounting year uses its own SQLite file located at `var/db_YYYY.sqlite`.
+
+### Create a new year database
 
 ```bash
-cd [my-app-name]
+# Create the SQLite file for a given year (e.g. 2024)
+touch var/db_2024.sqlite
+```
+
+### Run migrations on all year databases
+
+The custom `db:migrate-all` command applies (or rolls back) Artisan migrations against **every** `var/db_YYYY.sqlite` file automatically:
+
+```bash
+# Apply all pending migrations to every year database
+php artisan db:migrate-all
+
+# Roll back the last migration batch on every year database
+php artisan db:migrate-all --rollback
+
+# Force execution in production (skips the confirmation prompt)
+php artisan db:migrate-all --force
+```
+
+> If you only want to migrate the currently-selected year you can use the
+> standard Artisan command instead:
+> ```bash
+> php artisan migrate
+> ```
+
+---
+
+## Running the application
+
+### Local development server
+
+```bash
 composer start
+# or equivalently
+php artisan serve
 ```
 
-Or you can use `docker-compose` to run the app with `docker`, so you can run these commands:
+The application will be available at <http://localhost:8000>.
+
+### Docker
+
 ```bash
-cd [my-app-name]
 docker-compose up -d
 ```
-After that, open `http://localhost:8080` in your browser.
 
-Run this command in the application directory to run the test suite
+The application will be available at <http://localhost:8090>.
+
+---
+
+## Running the test suite
 
 ```bash
 composer test
 ```
 
+---
 
-Please use doctrine to manage the database. You can run the following command to see the available commands:
+## Static analysis
 
 ```bash
-php vendor/bin/doctrine
+composer phpstan
 ```
+

@@ -2,20 +2,14 @@
 
 namespace App\Services;
 
-use Doctrine\ORM\EntityManager;
-use App\Domain\Line;
-use App\Domain\LineBreakdown;
+use App\Models\Line;
+use App\Models\LineBreakdown;
 
 final class SogecomImportService
 {
-    public function __construct(
-        private EntityManager $em
-    ) {
-    }
-
     public function import($handle): void
     {
-        $this->em->getConnection()->beginTransaction();
+        \DB::beginTransaction();
 
         $firstLine = true;
 
@@ -26,46 +20,46 @@ final class SogecomImportService
             }
             $line = mb_convert_encoding($line, 'ISO-8859-1', 'UTF-8');
             $data = str_getcsv($line, ";");
-            $this->em->persist($this->createLine($data));
+            $this->createLine($data)->save();
             $fees = $this->createFeesLine($data);
             if ($fees) {
-                $this->em->persist($fees);
+                $fees->save();
             }
         }
 
-        $this->em->flush();
-        $this->em->getConnection()->commit();
+        \DB::commit();
     }
 
     public function createLine(array $data): Line
     {
         $line = new Line();
         $timezone = new \DateTimeZone('Europe/Paris');
-        $line->setDate(\DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone));
-        $line->setName(mb_convert_encoding($data[3], 'UTF-8', 'UTF-8'));
-        $line->setType("Sogecom");
-        $line->setAmount($this->toFloat($data[1]));
-        if ($line->getAmount() >= 120) {
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone)
+            ?: throw new \RuntimeException('Invalid date: ' . $data[0]);
+        $line->name = mb_convert_encoding($data[3], 'UTF-8', 'UTF-8');
+        $line->type = "Sogecom";
+        $line->amount = $this->toFloat($data[1]);
+        if ($line->amount >= 120) {
             // Supérieur à 120€, c'est un renouvellement CDN
-            $line->setBreakdown([LineBreakdown::PLANE_RENEWAL]);
-            $line->breakdownPlaneRenewal = 120;
-            $line->breakdownCustomerFees = $line->getAmount() - 120;
-            if ($line->breakdownCustomerFees > 0) {
-                $line->addBreakdown(LineBreakdown::CUSTOMER_FEES);
+            $line->breakdown = [LineBreakdown::PLANE_RENEWAL];
+            $line->breakdown_plane_renewal = 120;
+            $line->breakdown_customer_fees = $line->amount - 120;
+            if ($line->breakdown_customer_fees > 0) {
+                $line->breakdown = array_merge($line->breakdown ?? [], [LineBreakdown::CUSTOMER_FEES]);
             }
-            $line->setLabel('Renouvellement CDN');
-        } elseif ($line->getAmount() > 0) {
+            $line->label = 'Renouvellement CDN';
+        } elseif ($line->amount > 0) {
             // Inférieur à 120€, c'est une contribution RSA
-            $line->setBreakdown([LineBreakdown::RSA_NAV_CONTRIBUTION]);
-            $line->breakdownRSANavContribution = $line->getAmount();
-            $line->setLabel('COTISATION RSA NAV ' . $line->getDate()->format('Y'));
+            $line->breakdown = [LineBreakdown::RSA_NAV_CONTRIBUTION];
+            $line->breakdown_rsa_nav_contribution = $line->amount;
+            $line->label = 'COTISATION RSA NAV ' . $line->date->format('Y');
         } else {
             // Montant négatif, c'est un transfert vers la SG
-            $line->setBreakdown([LineBreakdown::INTERNAL_TRANSFER]);
-            $line->breakdownInternalTransfer = $line->getAmount();
-            $line->setLabel('Virement vers la SG');
+            $line->breakdown = [LineBreakdown::INTERNAL_TRANSFER];
+            $line->breakdown_internal_transfer = $line->amount;
+            $line->label = 'Virement vers la SG';
         }
-        $line->setDescription(mb_convert_encoding($data[4] . "\n" . $data[5], 'UTF-8', 'UTF-8'));
+        $line->description = mb_convert_encoding($data[4] . "\n" . $data[5], 'UTF-8', 'UTF-8');
 
         return $line;
     }
@@ -74,13 +68,14 @@ final class SogecomImportService
     {
         $line = new Line();
         $timezone = new \DateTimeZone('Europe/Paris');
-        $line->setDate(\DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone));
-        $line->setType("Sogecom");
-        $line->setName($data[3]);
-        $line->setAmount($this->toFloat($data[6]) * -1);
-        $line->setBreakdown([LineBreakdown::SOGECOM_FEES]);
-        $line->breakdownSogecomFees = $line->getAmount();
-        if ($line->getAmount() == 0) {
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0], $timezone)
+            ?: throw new \RuntimeException('Invalid date: ' . $data[0]);
+        $line->type = "Sogecom";
+        $line->name = $data[3];
+        $line->amount = $this->toFloat($data[6]) * -1;
+        $line->breakdown = [LineBreakdown::SOGECOM_FEES];
+        $line->breakdown_sogecom_fees = $line->amount;
+        if ($line->amount == 0) {
             return null;
         }
         return $line;
@@ -88,6 +83,6 @@ final class SogecomImportService
 
     private function toFloat(string $value): float
     {
-        return floatval(strtr(str_replace(' EUR', '', $value), [',' => '.', ' ' => '', ' ' => '']));
+        return floatval(strtr(str_replace(' EUR', '', $value), [',' => '.', ' ' => '', "\xc2\xa0" => '']));
     }
 }

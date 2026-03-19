@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Domain\Line;
-use App\Domain\LineBreakdown;
-use App\Infrastructure\Persistence\CheckDelivery\DbCheckDeliveryRepository;
-use App\Infrastructure\Persistence\Line\DbLineRepository;
+use App\Models\CheckDelivery;
+use App\Models\Line;
+use App\Models\LineBreakdown;
 use App\Services\ExcelExportService;
-use Doctrine\ORM\QueryBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,8 +18,6 @@ use Illuminate\Routing\Controller;
 class BookController extends Controller
 {
     public function __construct(
-        private DbLineRepository $lineRepository,
-        private DbCheckDeliveryRepository $checkDeliveryRepository,
         private ExcelExportService $excelExportService,
     ) {
     }
@@ -51,42 +48,34 @@ class BookController extends Controller
         ];
 
         if (!empty($params['search']['value'])) {
-            $qb->andWhere($qb->expr()->orX(
-                'l.amount LIKE :search',
-                'l.date LIKE :search',
-                'l.type LIKE :search',
-                'l.label LIKE :search',
-                'l.name LIKE :search',
-            ));
-            $qb->setParameter('search', '%' . $params['search']['value'] . '%');
+            $search = $params['search']['value'];
+            $qb->where(function ($q) use ($search) {
+                $q->where('amount', 'like', '%' . $search . '%')
+                  ->orWhere('date', 'like', '%' . $search . '%')
+                  ->orWhere('type', 'like', '%' . $search . '%')
+                  ->orWhere('label', 'like', '%' . $search . '%')
+                  ->orWhere('name', 'like', '%' . $search . '%');
+            });
         }
 
         foreach (($params['columns'] ?? []) as $column) {
-            if (empty($column['search']['value'])) {
-                continue;
-            }
-
             $columnKey = $column['data'] ?? null;
 
-            // Skip unknown columns to avoid injecting unexpected DQL identifiers
+            // Skip unknown columns to avoid injecting unexpected identifiers
             if ($columnKey === null) {
                 continue;
             }
 
+            $searchVal = $column['search']['value'];
+
             match ($columnKey) {
-                'credit', 'debit' => $qb->andWhere('l.amount LIKE :search_' . $columnKey),
-                'date'            => $qb->andWhere('l.date LIKE :search_' . $columnKey),
-                'breakdown'       => !empty($column['search']['value'])
-                    ? $qb->andWhere('l.breakdown IS NOT NULL')
-                    : $qb->andWhere('l.breakdown IS NULL'),
+                'credit', 'debit' => $qb->where('amount', 'like', '%' . $searchVal . '%'),
+                'date'            => $qb->where('date', 'like', '%' . $searchVal . '%'),
+                'breakdown'       => !(empty($searchVal) ? $qb->whereNotNull('breakdown') : $qb->whereNull('breakdown')),
                 default           => isset($columnFieldMap[$columnKey])
-                    ? $qb->andWhere('l.' . $columnFieldMap[$columnKey] . ' LIKE :search_' . $columnKey)
+                    ? $qb->where($columnFieldMap[$columnKey], 'like', '%' . $searchVal . '%')
                     : null,
             };
-
-            if ($columnKey !== 'breakdown' && (isset($columnFieldMap[$columnKey]) || $columnKey === 'credit' || $columnKey === 'debit')) {
-                $qb->setParameter('search_' . $columnKey, '%' . $column['search']['value'] . '%');
-            }
         }
 
         $qbLines = clone $qb;
@@ -97,26 +86,26 @@ class BookController extends Controller
             $order            = in_array($orderDir, ['ASC', 'DESC'], true) ? $orderDir : 'ASC';
 
             if ($sortKey !== null && isset($columnFieldMap[$sortKey])) {
-                $qbLines->orderBy('l.' . $columnFieldMap[$sortKey], $order);
+                $qbLines->orderBy($columnFieldMap[$sortKey], $order);
             }
         }
 
-        $lines = $qbLines->getQuery()
-            ->setFirstResult(!empty($params['start']) ? (int) $params['start'] : 0)
-            ->setMaxResults(!empty($params['length']) ? (int) $params['length'] : 10)
-            ->getResult();
+        $lines = $qbLines
+            ->skip(!empty($params['start']) ? (int) $params['start'] : 0)
+            ->take(!empty($params['length']) ? (int) $params['length'] : 10)
+            ->get();
 
         return response()->json([
             'draw'            => !empty($params['draw']) ? (int) $params['draw'] : 1,
-            'recordsTotal'    => $this->buildQueryBuilder()->select('count(l.id)')->getQuery()->getSingleScalarResult(),
-            'recordsFiltered' => $qb->select('count(l.id)')->getQuery()->getSingleScalarResult(),
+            'recordsTotal'    => $this->buildQueryBuilder()->count(),
+            'recordsFiltered' => $qb->count(),
             'data'            => $lines,
         ]);
     }
 
     public function lineEdit(Request $request, int $id): Response|RedirectResponse
     {
-        $line = $this->lineRepository->findLineOfId($id);
+        $line = Line::find($id);
         if (!$line) {
             return redirect()->route('book');
         }
@@ -125,16 +114,21 @@ class BookController extends Controller
             return $this->convertCheckDelivery($request, $line);
         }
 
+        $columnKeys = LineBreakdown::columnKeys();
+
         if ($request->isMethod('post')) {
-            $line->setType((string) $request->input('type'));
-            $line->setLabel((string) $request->input('label'));
-            $line->setName((string) $request->input('name'));
-            $line->setBreakdown((array) $request->input('breakdown', []));
+            $line->type = (string) $request->input('type');
+            $line->label = (string) $request->input('label');
+            $line->name = (string) $request->input('name');
+            $line->breakdown = array_values((array) $request->input('breakdown', []));
             foreach (array_keys(LineBreakdown::getBreakdowns()) as $breakdown) {
-                $key = 'breakdown' . $breakdown;
-                $line->__set($key, self::parseCurrency($request->input($key)));
+                $inputKey  = 'breakdown' . $breakdown;
+                $columnKey = $columnKeys[$breakdown] ?? null;
+                if ($columnKey !== null) {
+                    $line->{$columnKey} = self::parseCurrency($request->input($inputKey));
+                }
             }
-            $this->lineRepository->save($line);
+            $line->save();
 
             return redirect()->route('book');
         }
@@ -142,16 +136,16 @@ class BookController extends Controller
         $vars = [
             'line'       => $line,
             'breakdowns' => LineBreakdown::getBreakdowns(),
+            'columnKeys' => $columnKeys,
         ];
 
-        if ($line->getLabel() === 'REMISES DE CHEQUES') {
+        if ($line->label === 'REMISES DE CHEQUES') {
             $checkCount = 0;
-            if (preg_match('/DE\s+([0-9]+)\s+CHQ/', (string) $line->getDescription(), $matches)) {
+            if (preg_match('/DE\s+([0-9]+)\s+CHQ/', (string) $line->description, $matches)) {
                 $checkCount = (int) $matches[1];
             }
             $vars['check_count']      = $checkCount;
-            $vars['check_deliveries'] = $this->checkDeliveryRepository
-                ->findByDifference($line->getAmount(), $checkCount, $line->getDate());
+            $vars['check_deliveries'] = $this->findByDifference($line->amount, $checkCount, $line->date);
         }
 
         return response(view('edit_line', $vars));
@@ -164,54 +158,76 @@ class BookController extends Controller
 
     private function convertCheckDelivery(Request $request, Line $line): RedirectResponse
     {
-        $checkDelivery = $this->checkDeliveryRepository
-            ->findCheckDeliveryOfId((int) $request->input('check_delivery'));
+        $checkDelivery = CheckDelivery::find((int) $request->input('check_delivery'));
 
-        foreach ($checkDelivery->getLines() as $checkDeliveryLine) {
-            $newLine = new Line();
-            $newLine->setType('CHQ');
-            $newLine->setName((string) $checkDeliveryLine->getName());
-            $newLine->setLabel((string) $checkDeliveryLine->getLabel());
-            $newLine->setDescription(
-                'Chèque n°' . $checkDeliveryLine->getCheckNumber()
-                . ' remis le ' . $checkDelivery->getDate()->format('d/m/Y')
-            );
-            $newLine->setDate($checkDelivery->getDate());
-            $newLine->setAmount($checkDeliveryLine->getAmount());
-
-            if (str_starts_with((string) $checkDeliveryLine->getLabel(), 'COTISATION')) {
-                $newLine->setBreakdown([LineBreakdown::RSA_NAV_CONTRIBUTION]);
-                $newLine->breakdownInternalTransfer = $newLine->getAmount();
-            } else {
-                $newLine->setBreakdown([LineBreakdown::PLANE_RENEWAL]);
-                $newLine->breakdownPlaneRenewal  = 120;
-                $newLine->breakdownCustomerFees  = $newLine->getAmount() - 120;
-                if ($newLine->breakdownCustomerFees > 0) {
-                    $newLine->addBreakdown(LineBreakdown::CUSTOMER_FEES);
-                }
-            }
-            $this->lineRepository->save($newLine);
+        if (!$checkDelivery) {
+            return redirect()->route('book');
         }
 
-        $this->lineRepository->delete($line);
-        $checkDelivery->setConverted(true);
-        $this->checkDeliveryRepository->save($checkDelivery);
+        foreach ($checkDelivery->lines as $checkDeliveryLine) {
+            $newLine = new Line();
+            $newLine->type = 'CHQ';
+            $newLine->name = (string) $checkDeliveryLine->name;
+            $newLine->label = (string) $checkDeliveryLine->label;
+            $newLine->description =
+                'Chèque n°' . $checkDeliveryLine->check_number
+                . ' remis le ' . $checkDelivery->date->format('d/m/Y');
+            $newLine->date = $checkDelivery->date;
+            $newLine->amount = $checkDeliveryLine->amount;
+
+            if (str_starts_with((string) $checkDeliveryLine->label, 'COTISATION')) {
+                $newLine->breakdown = [LineBreakdown::RSA_NAV_CONTRIBUTION];
+                $newLine->breakdown_rsa_nav_contribution = $newLine->amount;
+            } else {
+                $newLine->breakdown = [LineBreakdown::PLANE_RENEWAL];
+                $newLine->breakdown_plane_renewal  = 120;
+                $newLine->breakdown_customer_fees  = $newLine->amount - 120;
+                if ($newLine->breakdown_customer_fees > 0) {
+                    $newLine->breakdown = array_merge($newLine->breakdown ?? [], [LineBreakdown::CUSTOMER_FEES]);
+                }
+            }
+            $newLine->save();
+        }
+
+        $line->delete();
+        $checkDelivery->converted = true;
+        $checkDelivery->save();
 
         return redirect()->route('book');
     }
 
-    private function buildQueryBuilder(): QueryBuilder
+    private function buildQueryBuilder(): Builder
     {
         $ignoredBreakdowns = [
             LineBreakdown::PAYPAL_FEES,
             LineBreakdown::SOGECOM_FEES,
             LineBreakdown::INTERNAL_TRANSFER,
         ];
-        $qb = $this->lineRepository->getQueryBuilder();
-        $qb->where('l.breakdown IS NULL OR l.breakdown NOT IN (:breakdown)');
-        $qb->setParameter('breakdown', $ignoredBreakdowns);
 
-        return $qb;
+        return Line::query()->where(function ($q) use ($ignoredBreakdowns) {
+            $q->whereNull('breakdown');
+            $q->orWhere(function ($q2) use ($ignoredBreakdowns) {
+                foreach ($ignoredBreakdowns as $breakdown) {
+                    $q2->where('breakdown', 'not like', '%"' . $breakdown . '"%');
+                }
+            });
+        });
+    }
+
+    private function findByDifference(float $amount, int $count, $date): array
+    {
+        $dateStr = $date instanceof \DateTimeInterface ? $date->format('Y-m-d') : (string) $date;
+
+        return CheckDelivery::query()
+            ->leftJoin('check_deliveries_line', 'check_deliveries.id', '=', 'check_deliveries_line.check_delivery_id')
+            ->where('check_deliveries.converted', false)
+            ->groupBy('check_deliveries.id')
+            ->select('check_deliveries.*')
+            ->orderByRaw('ABS(check_deliveries.amount - ?)', [$amount])
+            ->orderByRaw('ABS(COUNT(check_deliveries_line.id) - ?)', [$count])
+            ->orderByRaw('ABS(julianday(check_deliveries.date) - julianday(?))', [$dateStr])
+            ->get()
+            ->all();
     }
 
     private static function parseCurrency(?string $currency): float
