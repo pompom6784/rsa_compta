@@ -39,6 +39,7 @@
     "scripts": {
         "start": "php artisan serve",
         "test": "phpunit",
+        "phpcs": "phpcs --standard=phpcs.xml",
         "phpstan": "phpstan analyse",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

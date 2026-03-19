@@ -71,7 +71,8 @@ class BookController extends Controller
             match ($columnKey) {
                 'credit', 'debit' => $qb->where('amount', 'like', '%' . $searchVal . '%'),
                 'date'            => $qb->where('date', 'like', '%' . $searchVal . '%'),
-                'breakdown'       => !(empty($searchVal) ? $qb->whereNotNull('breakdown') : $qb->whereNull('breakdown')),
+                'breakdown'       => !(empty($searchVal) ?
+                    $qb->whereNotNull('breakdown') : $qb->whereNull('breakdown')),
                 default           => isset($columnFieldMap[$columnKey])
                     ? $qb->where($columnFieldMap[$columnKey], 'like', '%' . $searchVal . '%')
                     : null,
