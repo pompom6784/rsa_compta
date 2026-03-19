@@ -14,11 +14,9 @@ use App\Services\SogecomImportService;
 use App\Services\YearService;
 use Doctrine\ORM\EntityManager;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
-use Monolog\Processor\UidProcessor;
 use Psr\Log\LoggerInterface;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,16 +28,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(YearService::class);
 
-        $this->app->singleton(LoggerInterface::class, function (): Logger {
-            $logPath = isset($_ENV['docker'])
-                ? 'php://stdout'
-                : storage_path('logs/app.log');
-
-            $logger = new Logger('app');
-            $logger->pushProcessor(new UidProcessor());
-            $logger->pushHandler(new StreamHandler($logPath, Logger::DEBUG));
-
-            return $logger;
+        $this->app->singleton(LoggerInterface::class, function (): LoggerInterface {
+            return Log::channel()->getLogger();
         });
 
         // Repositories
