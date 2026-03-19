@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property float                           $amount
  * @property array                           $breakdown
  * @property string|null                     $description
+ * @property string|null                     $import_hash
  * @property float|null                      $breakdown_plane_renewal
  * @property float|null                      $breakdown_customer_fees
  * @property float|null                      $breakdown_rsa_contribution
@@ -49,6 +50,7 @@ class Line extends Model
         'amount',
         'breakdown',
         'description',
+        'import_hash',
         'breakdown_plane_renewal',
         'breakdown_customer_fees',
         'breakdown_rsa_contribution',
