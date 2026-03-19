@@ -26,7 +26,7 @@ class DoctrineServiceProvider extends ServiceProvider
 
             $devMode  = (bool) $config->get('doctrine.dev_mode', true);
             $cacheDir = (string) $config->get('doctrine.cache_dir', storage_path('framework/doctrine'));
-            $metaDirs = (array) $config->get('doctrine.metadata_dirs', [base_path('src/Domain')]);
+            $metaDirs = (array) $config->get('doctrine.metadata_dirs', []);
 
             $cache = $devMode
                 ? new ArrayAdapter()

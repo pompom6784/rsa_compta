@@ -111,7 +111,10 @@ class ImportController extends Controller
 
         $realPath = $file->getRealPath();
         if ($realPath === false) {
-            return response(view('imports', ['error' => "Erreur système : chemin de fichier temporaire invalide"]));
+            return response(view(
+                'imports',
+                ['error' => "Erreur système : chemin de fichier temporaire invalide"]
+            ));
         }
 
         $reader = IOFactory::createReader('Xlsx');
@@ -134,7 +137,8 @@ class ImportController extends Controller
             UPLOAD_ERR_PARTIAL                         => "Le fichier n'a été que partiellement envoyé",
             UPLOAD_ERR_NO_TMP_DIR                      => 'Erreur système : aucun répertoire temporaire',
             UPLOAD_ERR_CANT_WRITE                      => "Erreur système : impossible d'écrire sur le disque",
-            UPLOAD_ERR_EXTENSION                       => "Erreur système : une extension PHP a arrêté l'envoi de fichier",
+            UPLOAD_ERR_EXTENSION                       =>
+                "Erreur système : une extension PHP a arrêté l'envoi de fichier",
             UPLOAD_ERR_OK                              => '',
             default                                    => "Erreur lors de l'import du fichier",
         };
