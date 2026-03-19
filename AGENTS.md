@@ -8,3 +8,5 @@ This project is an accounting form ingesting a few differents sources of xls and
 **Key Technologies:**
 - **PHP 8.3+** with Slim framework
 - **SQLite** database with Doctrine ORM
+
+Please follow the phpcs and phpstan rules to ensure code quality and maintainability. The project is set up with GitHub Actions for continuous integration, running tests and static analysis on each push.
