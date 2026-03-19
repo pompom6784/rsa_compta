@@ -2,20 +2,14 @@
 
 namespace App\Services;
 
-use Doctrine\ORM\EntityManager;
-use App\Domain\Line;
-use App\Domain\LineBreakdown;
+use App\Models\Line;
+use App\Models\LineBreakdown;
 
 final class SGImportService
 {
-    public function __construct(
-        private EntityManager $em
-    ) {
-    }
-
     public function import($handle): void
     {
-        $this->em->getConnection()->beginTransaction();
+        \DB::beginTransaction();
 
         $lineNumber = 1;
 
@@ -40,8 +34,7 @@ final class SGImportService
             }
         }
 
-        $this->em->flush();
-        $this->em->getConnection()->commit();
+        \DB::commit();
     }
 
     public function createLine(array $data, $handle, &$fileLine): void
@@ -53,9 +46,9 @@ final class SGImportService
             $fileLine = fgets($handle);
             return;
         }
-        $line->setDate($date);
-        $line->setAmount($this->toFloat($data[2] == "" ? $data[3] : $data[2]));
-        $line->setLabel($data[6]);
+        $line->date = $date;
+        $line->amount = $this->toFloat($data[2] == "" ? $data[3] : $data[2]);
+        $line->label = $data[6];
 
         $description = $data[1] . "\n";
 
@@ -67,64 +60,64 @@ final class SGImportService
             $data = str_getcsv($fileLine, ";");
         }
 
-        $line->setDescription($description);
+        $line->description = $description;
 
         $line = $this->qualifyLine($line);
 
         if ($line) {
-            $this->em->persist($line);
+            $line->save();
         }
     }
 
     private function qualifyLine(Line $line): Line | null
     {
-        if (strpos($line->getDescription(), 'ABONNT ENCAISSEMENT INTERNET') === 0) {
-            $line->setType('VRT');
-            $line->setBreakdown([LineBreakdown::SOGECOM_FEES]);
-            $line->breakdownSogecomFees = $line->getAmount();
+        if (strpos($line->description, 'ABONNT ENCAISSEMENT INTERNET') === 0) {
+            $line->type = 'VRT';
+            $line->breakdown = [LineBreakdown::SOGECOM_FEES];
+            $line->breakdown_sogecom_fees = $line->amount;
             return $line;
         }
-        if (strpos($line->getDescription(), 'COTISATION JAZZ ASSOCIATIONS') === 0) {
-            $line->setType('VRT');
-            $line->setBreakdown([LineBreakdown::INTERNAL_TRANSFER]);
-            $line->breakdownInternalTransfer = $line->getAmount();
+        if (strpos($line->description, 'COTISATION JAZZ ASSOCIATIONS') === 0) {
+            $line->type = 'VRT';
+            $line->breakdown = [LineBreakdown::INTERNAL_TRANSFER];
+            $line->breakdown_internal_transfer = $line->amount;
             return $line;
         }
         // Frais déjà comptabilisés dans l'import Sogecom
-        if (strpos($line->getDescription(), 'REMISE CB') === 0) {
+        if (strpos($line->description, 'REMISE CB') === 0) {
             if (
-                $line->getLabel() === 'FACTURES CARTES REMISES'
-                || $line->getLabel() === 'COMMISSIONS ET FRAIS DIVERS'
+                $line->label === 'FACTURES CARTES REMISES'
+                || $line->label === 'COMMISSIONS ET FRAIS DIVERS'
             ) {
                 return null;
             }
         }
-        if ($line->getLabel() === 'AUTRES VIREMENTS RECUS' || strpos($line->getDescription(), 'VIR INST RE') === 0) {
-            $line->setType('VRT');
+        if ($line->label === 'AUTRES VIREMENTS RECUS' || strpos($line->description, 'VIR INST RE') === 0) {
+            $line->type = 'VRT';
         }
-        if (strpos($line->getDescription(), 'DE: PayPal Europe S.a.r.l. et Cie S.C.A') !== false) {
-            $line->setBreakdown([LineBreakdown::INTERNAL_TRANSFER]);
-            $line->breakdownInternalTransfer = $line->getAmount();
+        if (strpos($line->description, 'DE: PayPal Europe S.a.r.l. et Cie S.C.A') !== false) {
+            $line->breakdown = [LineBreakdown::INTERNAL_TRANSFER];
+            $line->breakdown_internal_transfer = $line->amount;
             return $line;
         }
-        if ($line->getLabel() === 'AUTRES VIREMENTS EMIS') {
-            $line->setType('VRT');
+        if ($line->label === 'AUTRES VIREMENTS EMIS') {
+            $line->type = 'VRT';
             if (
                 (
-                    strpos($line->getDescription(), 'RBTS FRAIS PEN') !== false
-                    || strpos($line->getDescription(), 'RBT FRAIS PEN') !== false
+                    strpos($line->description, 'RBTS FRAIS PEN') !== false
+                    || strpos($line->description, 'RBT FRAIS PEN') !== false
                 )
-                && $line->getAmount() < 0
+                && $line->amount < 0
             ) {
-                $line->setBreakdown([LineBreakdown::PEN_REFUND]);
-                $line->breakdownPenRefund = $line->getAmount();
-                $line->setName('PEN');
+                $line->breakdown = [LineBreakdown::PEN_REFUND];
+                $line->breakdown_pen_refund = $line->amount;
+                $line->name = 'PEN';
                 return $line;
             }
-            if (strpos($line->getDescription(), 'OSAC  DFFAI') !== false && $line->getAmount() < 0) {
-                $line->setBreakdown([LineBreakdown::OSAC]);
-                $line->breakdownOsac = $line->getAmount();
-                $line->setName('OSAC');
+            if (strpos($line->description, 'OSAC  DFFAI') !== false && $line->amount < 0) {
+                $line->breakdown = [LineBreakdown::OSAC];
+                $line->breakdown_osac = $line->amount;
+                $line->name = 'OSAC';
                 return $line;
             }
         }
@@ -133,6 +126,6 @@ final class SGImportService
 
     private function toFloat(string $value): float
     {
-        return floatval(strtr(str_replace(' EUR', '', $value), [',' => '.', ' ' => '', ' ' => '']));
+        return floatval(strtr(str_replace(' EUR', '', $value), [',' => '.', ' ' => '', "\xc2\xa0" => '']));
     }
 }

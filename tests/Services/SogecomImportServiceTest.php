@@ -4,19 +4,15 @@ namespace App\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use App\Services\SogecomImportService;
-use App\Domain\LineBreakdown;
-use Doctrine\ORM\EntityManager;
-use PHPUnit\Framework\MockObject\MockObject;
+use App\Models\LineBreakdown;
 
 class SogecomImportServiceTest extends TestCase
 {
     private SogecomImportService $service;
-    private MockObject $mockEntityManager;
 
     protected function setUp(): void
     {
-        $this->mockEntityManager = $this->createMock(EntityManager::class);
-        $this->service = new SogecomImportService($this->mockEntityManager);
+        $this->service = new SogecomImportService();
     }
 
     public function testCreateLineWithPlaneRenewal(): void
@@ -36,10 +32,10 @@ class SogecomImportServiceTest extends TestCase
         $line = $this->service->createLine($data);
 
         // Assert
-        $this->assertEquals(150.50, $line->getAmount());
-        $this->assertContains(LineBreakdown::PLANE_RENEWAL, $line->getBreakdown());
-        $this->assertEquals(120, $line->breakdownPlaneRenewal);
-        $this->assertEquals(30.50, $line->breakdownCustomerFees);
+        $this->assertEquals(150.50, $line->amount);
+        $this->assertContains(LineBreakdown::PLANE_RENEWAL, $line->breakdown);
+        $this->assertEquals(120, $line->breakdown_plane_renewal);
+        $this->assertEqualsWithDelta(30.50, $line->breakdown_customer_fees, 0.001);
     }
 
     public function testCreateLineWithSmallAmountIsRSAContribution(): void
@@ -59,8 +55,8 @@ class SogecomImportServiceTest extends TestCase
         $line = $this->service->createLine($data);
 
         // Assert
-        $this->assertEquals(50.00, $line->getAmount());
-        $this->assertContains(LineBreakdown::RSA_NAV_CONTRIBUTION, $line->getBreakdown());
+        $this->assertEquals(50.00, $line->amount);
+        $this->assertContains(LineBreakdown::RSA_NAV_CONTRIBUTION, $line->breakdown);
     }
 
     public function testCreateFeesLineCalculatesFees(): void
@@ -81,8 +77,8 @@ class SogecomImportServiceTest extends TestCase
 
         // Assert
         $this->assertNotNull($line);
-        $this->assertEquals(-2.50, $line->getAmount());
-        $this->assertContains(LineBreakdown::SOGECOM_FEES, $line->getBreakdown());
+        $this->assertEquals(-2.50, $line->amount);
+        $this->assertContains(LineBreakdown::SOGECOM_FEES, $line->breakdown);
     }
 
     public function testCreateFeesLineReturnsNullForZeroFees(): void

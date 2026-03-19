@@ -2,31 +2,25 @@
 
 namespace App\Services;
 
-use Doctrine\ORM\EntityManager;
-use App\Domain\CheckDelivery;
-use App\Domain\CheckDeliveryLine;
+use App\Models\CheckDelivery;
+use App\Models\CheckDeliveryLine;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 final class CheckDeliveryImportService
 {
-    public function __construct(
-        private EntityManager $em
-    ) {
-    }
-
     public function import(Spreadsheet $spreadsheet): void
     {
-        $this->em->getConnection()->beginTransaction();
-
-        $fileLine = 1;
+        \DB::beginTransaction();
 
         $checkDelivery = new CheckDelivery();
 
         $worksheet = $spreadsheet->getActiveSheet();
         $date = NumberFormat::toFormattedString($worksheet->getCell('B15')->getValue(), 'YYYY-MM-DD');
-        $checkDelivery->setDate(\DateTimeImmutable::createFromFormat("Y-m-d", $date));
-        $this->em->persist($checkDelivery);
+        $checkDelivery->date = \DateTimeImmutable::createFromFormat("Y-m-d", $date);
+        $checkDelivery->amount = 0;
+        $checkDelivery->save();
+
         $rowIterator = $worksheet->getRowIterator();
         $rowIterator->seek(19);
         $i = 1;
@@ -42,19 +36,20 @@ final class CheckDeliveryImportService
             if ($cells[0] === null) {
                 break;
             }
-            $checkDeliveryLine->setCheckNumber($cells[0]);
-            $checkDeliveryLine->setName($cells[1]);
-            $checkDeliveryLine->setLabel($cells[2]);
-            $checkDeliveryLine->setAmount(\is_string($cells[3]) ? $this->doMath($cells[3]) : $cells[3]);
+            $checkDeliveryLine->check_number = $cells[0];
+            $checkDeliveryLine->name = $cells[1];
+            $checkDeliveryLine->label = $cells[2];
+            $checkDeliveryLine->amount = \is_string($cells[3]) ? $this->doMath($cells[3]) : $cells[3];
+            $checkDeliveryLine->check_delivery_id = $checkDelivery->id;
+            $checkDeliveryLine->save();
 
-            $this->em->persist($checkDeliveryLine);
-            $checkDelivery->addLine($checkDeliveryLine);
-            $checkDelivery->setAmount($checkDelivery->getAmount() + $checkDeliveryLine->getAmount());
+            $checkDelivery->amount += $checkDeliveryLine->amount;
             $rowIterator->next();
         }
 
-        $this->em->flush();
-        $this->em->getConnection()->commit();
+        $checkDelivery->save();
+
+        \DB::commit();
     }
 
     private function doMath(string $value): float

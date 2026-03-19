@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use App\Domain\Line;
-use App\Domain\LineBreakdown;
-use App\Infrastructure\Persistence\Line\DbLineRepository;
+use App\Models\Line;
+use App\Models\LineBreakdown;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -12,11 +11,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 final class ExcelExportService
 {
-    public function __construct(
-        protected DbLineRepository $lineRepository,
-    ) {
-    }
-
     protected Spreadsheet $spreadsheet;
     protected Worksheet $activeWorksheet;
 
@@ -54,14 +48,21 @@ final class ExcelExportService
     protected function loadLines(): array
     {
         $breakdowns = [LineBreakdown::PAYPAL_FEES, LineBreakdown::SOGECOM_FEES, LineBreakdown::INTERNAL_TRANSFER];
-        $qb = $this->lineRepository->getQueryBuilder()
-          ->where('l.breakdown IS NULL OR l.breakdown NOT IN (:breakdown)')
-          ->setParameter('breakdown', $breakdowns)
-          ->orderBy('l.date', 'ASC')
-          ->setFirstResult($this->from)
-          ->setMaxResults($this->step);
 
-        return $qb->getQuery()->getResult();
+        return Line::query()
+            ->where(function ($q) use ($breakdowns) {
+                $q->whereNull('breakdown');
+                $q->orWhere(function ($q2) use ($breakdowns) {
+                    foreach ($breakdowns as $breakdown) {
+                        $q2->where('breakdown', 'not like', '%"' . $breakdown . '"%');
+                    }
+                });
+            })
+            ->orderBy('date', 'ASC')
+            ->skip($this->from)
+            ->take($this->step)
+            ->get()
+            ->all();
     }
 
     protected function insertLines()
@@ -77,9 +78,7 @@ final class ExcelExportService
 
     protected function insertFeeLines()
     {
-        $sogecomFees = $this->lineRepository->getQueryBuilder()
-        ->select('SUM(l.breakdownSogecomFees)')
-        ->getQuery()->getSingleScalarResult();
+        $sogecomFees = Line::query()->sum('breakdown_sogecom_fees');
         $this->activeWorksheet->setCellValue('A' . $this->currentLine, "Sogecom");
         $this->activeWorksheet->setCellValue('B' . $this->currentLine, "31/12/2023");
         $this->activeWorksheet->setCellValue('C' . $this->currentLine, "Sogecom");
@@ -88,9 +87,7 @@ final class ExcelExportService
         $this->activeWorksheet
         ->setCellValue('O' . $this->currentLine, self::formatCurrency($sogecomFees));
         $this->currentLine += 1;
-        $paypalFees = $this->lineRepository->getQueryBuilder()
-        ->select('SUM(l.breakdownPaypalFees)')
-        ->getQuery()->getSingleScalarResult();
+        $paypalFees = Line::query()->sum('breakdown_paypal_fees');
         $this->activeWorksheet->setCellValue('A' . $this->currentLine, "PAYPAL");
         $this->activeWorksheet->setCellValue('B' . $this->currentLine, "31/12/2023");
         $this->activeWorksheet->setCellValue('C' . $this->currentLine, "PAYPAL");
@@ -206,40 +203,40 @@ final class ExcelExportService
 
     protected function insertLine(Line $line)
     {
-        $this->activeWorksheet->setCellValue('A' . $this->currentLine, $line->getType());
-        $this->activeWorksheet->setCellValue('B' . $this->currentLine, $line->getDate()->format('d/m/Y'));
-        $this->activeWorksheet->setCellValue('C' . $this->currentLine, $line->getName());
-        $this->activeWorksheet->setCellValue('D' . $this->currentLine, $line->getLabel());
-        $this->activeWorksheet->setCellValue('E' . $this->currentLine, self::formatCurrency($line->getDebit()));
-        $this->activeWorksheet->setCellValue('F' . $this->currentLine, self::formatCurrency($line->getCredit()));
+        $this->activeWorksheet->setCellValue('A' . $this->currentLine, $line->type);
+        $this->activeWorksheet->setCellValue('B' . $this->currentLine, $line->date->format('d/m/Y'));
+        $this->activeWorksheet->setCellValue('C' . $this->currentLine, $line->name);
+        $this->activeWorksheet->setCellValue('D' . $this->currentLine, $line->label);
+        $this->activeWorksheet->setCellValue('E' . $this->currentLine, self::formatCurrency($line->debit));
+        $this->activeWorksheet->setCellValue('F' . $this->currentLine, self::formatCurrency($line->credit));
         $this->activeWorksheet
-            ->setCellValue('G' . $this->currentLine, self::formatCurrency($line->breakdownPlaneRenewal));
+            ->setCellValue('G' . $this->currentLine, self::formatCurrency($line->breakdown_plane_renewal));
         $this->activeWorksheet
-            ->setCellValue('H' . $this->currentLine, self::formatCurrency($line->breakdownCustomerFees));
+            ->setCellValue('H' . $this->currentLine, self::formatCurrency($line->breakdown_customer_fees));
         $this->activeWorksheet
-            ->setCellValue('I' . $this->currentLine, self::formatCurrency($line->breakdownRSANavContribution));
+            ->setCellValue('I' . $this->currentLine, self::formatCurrency($line->breakdown_rsa_nav_contribution));
         $this->activeWorksheet
-            ->setCellValue('J' . $this->currentLine, self::formatCurrency($line->breakdownRSAContribution));
+            ->setCellValue('J' . $this->currentLine, self::formatCurrency($line->breakdown_rsa_contribution));
         $this->activeWorksheet
-            ->setCellValue('K' . $this->currentLine, self::formatCurrency($line->breakdownFollowUpNav));
+            ->setCellValue('K' . $this->currentLine, self::formatCurrency($line->breakdown_follow_up_nav));
         $this->activeWorksheet
-            ->setCellValue('L' . $this->currentLine, self::formatCurrency($line->breakdownPenRefund));
+            ->setCellValue('L' . $this->currentLine, self::formatCurrency($line->breakdown_pen_refund));
         $this->activeWorksheet
-            ->setCellValue('M' . $this->currentLine, self::formatCurrency($line->breakdownMeeting));
+            ->setCellValue('M' . $this->currentLine, self::formatCurrency($line->breakdown_meeting));
         $this->activeWorksheet
-            ->setCellValue('N' . $this->currentLine, self::formatCurrency($line->breakdownPaypalFees));
+            ->setCellValue('N' . $this->currentLine, self::formatCurrency($line->breakdown_paypal_fees));
         $this->activeWorksheet
-            ->setCellValue('O' . $this->currentLine, self::formatCurrency($line->breakdownSogecomFees));
+            ->setCellValue('O' . $this->currentLine, self::formatCurrency($line->breakdown_sogecom_fees));
         $this->activeWorksheet
-            ->setCellValue('P' . $this->currentLine, self::formatCurrency($line->breakdownOsac));
+            ->setCellValue('P' . $this->currentLine, self::formatCurrency($line->breakdown_osac));
         $this->activeWorksheet
-            ->setCellValue('Q' . $this->currentLine, self::formatCurrency($line->breakdownOther));
+            ->setCellValue('Q' . $this->currentLine, self::formatCurrency($line->breakdown_other));
         $this->activeWorksheet
-            ->setCellValue('R' . $this->currentLine, self::formatCurrency($line->breakdownDonation));
+            ->setCellValue('R' . $this->currentLine, self::formatCurrency($line->breakdown_donation));
         $this->activeWorksheet
-            ->setCellValue('S' . $this->currentLine, self::formatCurrency($line->breakdownVibrationDebit));
+            ->setCellValue('S' . $this->currentLine, self::formatCurrency($line->breakdown_vibration_debit));
         $this->activeWorksheet
-            ->setCellValue('T' . $this->currentLine, self::formatCurrency($line->breakdownVibrationCredit));
+            ->setCellValue('T' . $this->currentLine, self::formatCurrency($line->breakdown_vibration_credit));
     }
 
     protected static function formatCurrency($value)

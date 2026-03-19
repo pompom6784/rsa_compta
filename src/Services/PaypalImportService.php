@@ -2,20 +2,14 @@
 
 namespace App\Services;
 
-use Doctrine\ORM\EntityManager;
-use App\Domain\Line;
-use App\Domain\LineBreakdown;
+use App\Models\Line;
+use App\Models\LineBreakdown;
 
 final class PaypalImportService
 {
-    public function __construct(
-        private EntityManager $em
-    ) {
-    }
-
     public function import($handle): void
     {
-        $this->em->getConnection()->beginTransaction();
+        \DB::beginTransaction();
 
         $fileLine = 1;
 
@@ -28,44 +22,43 @@ final class PaypalImportService
                 continue;
             }
             $line = str_getcsv($line, ",");
-            $this->em->persist($this->createLine($line));
+            $this->createLine($line)->save();
             $fees = $this->createFeesLine($line);
             if ($fees) {
-                $this->em->persist($fees);
+                $fees->save();
             }
         }
 
-        $this->em->flush();
-        $this->em->getConnection()->commit();
+        \DB::commit();
     }
 
     public function createLine(array $data): Line
     {
         $line = new Line();
         $timezone = new \DateTimeZone($data[2] ?? 'Europe/Paris');
-        $line->setDate(\DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone));
-        $line->setName($data[3]);
-        $line->setType("PAYPAL");
-        $line->setAmount($this->toFloat($data[7]));
-        $line->setLabel($data[15]);
-        if ($line->getAmount() >= 120) {
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone);
+        $line->name = $data[3];
+        $line->type = "PAYPAL";
+        $line->amount = $this->toFloat($data[7]);
+        $line->label = $data[15];
+        if ($line->amount >= 120) {
             // Supérieur à 120€, c'est un renouvellement d'avion
-            $line->setBreakdown([LineBreakdown::PLANE_RENEWAL]);
-            $line->breakdownPlaneRenewal = 120;
-            $line->breakdownCustomerFees = $line->getAmount() - 120;
-            if ($line->breakdownCustomerFees > 0) {
-                $line->addBreakdown(LineBreakdown::CUSTOMER_FEES);
+            $line->breakdown = [LineBreakdown::PLANE_RENEWAL];
+            $line->breakdown_plane_renewal = 120;
+            $line->breakdown_customer_fees = $line->amount - 120;
+            if ($line->breakdown_customer_fees > 0) {
+                $line->breakdown = array_merge($line->breakdown ?? [], [LineBreakdown::CUSTOMER_FEES]);
             }
-        } elseif ($line->getAmount() > 0) {
+        } elseif ($line->amount > 0) {
             // Inférieur à 120€, c'est une contribution RSA
-            $line->setBreakdown([LineBreakdown::RSA_NAV_CONTRIBUTION]);
-            $line->breakdownRSANavContribution = $line->getAmount();
+            $line->breakdown = [LineBreakdown::RSA_NAV_CONTRIBUTION];
+            $line->breakdown_rsa_nav_contribution = $line->amount;
         } else {
             // Montant négatif, c'est un transfert vers la SG
-            $line->setBreakdown([LineBreakdown::INTERNAL_TRANSFER]);
-            $line->breakdownInternalTransfer = $line->getAmount();
+            $line->breakdown = [LineBreakdown::INTERNAL_TRANSFER];
+            $line->breakdown_internal_transfer = $line->amount;
         }
-        $line->setDescription($data[26]);
+        $line->description = $data[26];
 
         return $line;
     }
@@ -74,13 +67,13 @@ final class PaypalImportService
     {
         $line = new Line();
         $timezone = new \DateTimeZone($data[2] ?? 'Europe/Paris');
-        $line->setDate(\DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone));
-        $line->setType("PAYPAL");
-        $line->setName($data[3]);
-        $line->setAmount($this->toFloat($data[8]));
-        $line->setBreakdown([LineBreakdown::PAYPAL_FEES]);
-        $line->breakdownPaypalFees = $line->getAmount();
-        if ($line->getAmount() == 0) {
+        $line->date = \DateTimeImmutable::createFromFormat("d/m/Y H:i:s", $data[0] . ' ' . $data[1], $timezone);
+        $line->type = "PAYPAL";
+        $line->name = $data[3];
+        $line->amount = $this->toFloat($data[8]);
+        $line->breakdown = [LineBreakdown::PAYPAL_FEES];
+        $line->breakdown_paypal_fees = $line->amount;
+        if ($line->amount == 0) {
             return null;
         }
         return $line;
@@ -88,6 +81,6 @@ final class PaypalImportService
 
     private function toFloat(string $value): float
     {
-        return floatval(strtr($value, [',' => '.', ' ' => '', ' ' => '']));
+        return floatval(strtr($value, [',' => '.', ' ' => '', "\xc2\xa0" => '']));
     }
 }

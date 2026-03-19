@@ -41,4 +41,36 @@ final class LineBreakdown
             self::VIBRATION_CREDIT     => 'Vibration Credit',
         ];
     }
+
+    /** @return array<string, string> */
+    public static function getBreakdowns(): array
+    {
+        return self::labels();
+    }
+
+    /**
+     * Maps constant values (e.g. 'PlaneRenewal') to Eloquent snake_case column names.
+     *
+     * @return array<string, string>
+     */
+    public static function columnKeys(): array
+    {
+        return [
+            self::PLANE_RENEWAL        => 'breakdown_plane_renewal',
+            self::CUSTOMER_FEES        => 'breakdown_customer_fees',
+            self::RSA_NAV_CONTRIBUTION => 'breakdown_rsa_nav_contribution',
+            self::RSA_CONTRIBUTION     => 'breakdown_rsa_contribution',
+            self::FOLLOW_UP_NAV        => 'breakdown_follow_up_nav',
+            self::INTERNAL_TRANSFER    => 'breakdown_internal_transfer',
+            self::PEN_REFUND           => 'breakdown_pen_refund',
+            self::MEETING              => 'breakdown_meeting',
+            self::PAYPAL_FEES          => 'breakdown_paypal_fees',
+            self::SOGECOM_FEES         => 'breakdown_sogecom_fees',
+            self::OSAC                 => 'breakdown_osac',
+            self::OTHER                => 'breakdown_other',
+            self::DONATION             => 'breakdown_donation',
+            self::VIBRATION_DEBIT      => 'breakdown_vibration_debit',
+            self::VIBRATION_CREDIT     => 'breakdown_vibration_credit',
+        ];
+    }
 }

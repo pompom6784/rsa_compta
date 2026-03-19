@@ -4,20 +4,16 @@ namespace Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use App\Services\CheckDeliveryImportService;
-use Doctrine\ORM\EntityManager;
-use PHPUnit\Framework\MockObject\MockObject;
 
 class CheckDeliveryImportServiceTest extends TestCase
 {
     protected CheckDeliveryImportService $checkDeliveryImportService;
-    private MockObject $mockEntityManager;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->mockEntityManager = $this->createMock(EntityManager::class);
-        $this->checkDeliveryImportService = new CheckDeliveryImportService($this->mockEntityManager);
+        $this->checkDeliveryImportService = new CheckDeliveryImportService();
     }
 
     public function test(): void
