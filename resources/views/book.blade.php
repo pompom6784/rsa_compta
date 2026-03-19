@@ -111,7 +111,7 @@
         {data: 'type'},
         {data: 'date',
           render: function(data, type, row) {
-            const date = new Date(data.date);
+            const date = new Date(data);
             return dateFns.format(date, 'DD/MM/YYYY');
           }
         },
@@ -134,7 +134,7 @@
         {
           data: 'breakdown',
           render: function (data) {
-            return data.length > 0 ? '<span style="color: green;">&check;</span>' : '<span style="color: red;">&cross;</span>';
+            return data?.length > 0 ? '<span style="color: green;">&check;</span>' : '<span style="color: red;">&cross;</span>';
           }
         },
         {
