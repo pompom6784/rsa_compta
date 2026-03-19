@@ -17,12 +17,12 @@ use Illuminate\Support\Facades\Config;
  * This command iterates all available years and migrates each one in turn.
  *
  * Usage:
- *   php artisan migrate:all-years
- *   php artisan migrate:all-years --rollback   # roll back the last batch on every DB
+ *   php artisan db:migrate-all
+ *   php artisan db:migrate-all --rollback   # roll back the last batch on every DB
  */
-class MigrateAllYears extends Command
+class MigrateAllDatabases extends Command
 {
-    protected $signature = 'migrate:all-years
+    protected $signature = 'db:migrate-all
                             {--rollback : Roll back the last migration batch on every year database}
                             {--force : Force the operation to run in production}';
 
