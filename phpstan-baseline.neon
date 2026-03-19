@@ -1,11 +1,1 @@
-parameters:
-	ignoreErrors:
-		-
-			message: "#^Property App\\\\Domain\\\\CheckDelivery\\:\\:\\$id is never written, only read\\.$#"
-			count: 1
-			path: src/Domain/CheckDelivery.php
 
-		-
-			message: "#^Property App\\\\Domain\\\\CheckDeliveryLine\\:\\:\\$id is never written, only read\\.$#"
-			count: 1
-			path: src/Domain/CheckDeliveryLine.php
