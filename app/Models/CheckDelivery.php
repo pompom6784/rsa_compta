@@ -19,6 +19,10 @@ class CheckDelivery extends Model
 
     protected $dateFormat = 'Y-m-d H:i:s';
 
+    protected $attributes = [
+        'converted' => false,
+    ];
+
     protected $fillable = [
         'date',
         'amount',
