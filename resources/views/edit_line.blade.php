@@ -98,6 +98,52 @@
     const lineAmount = {{ $line->amount }};
     const checkCount = {{ $check_count ?? 0 }};
 
+    function getTotal() {
+      let total = 0;
+      $('.breakdown-input').each(function() {
+        let value = $(this).val();
+        value = value.replace(/[^-0-9,]/g, '');
+        value = value.replace(',', '.');
+        value = parseFloat(value);
+        if (value > 0) {
+          const name = $(this).attr('name').replace('breakdown', '');
+          $('#breakdown_' + name).prop('checked', true);
+          $('.breakdown-input-' + name).show();
+        }
+        total += value;
+      });
+      return total.toFixed(2);
+    }
+    function validateForm() {
+      const checkDelivery = $('select[name="check_delivery"]');
+      if (checkDelivery.length > 0) {
+        if (checkDelivery.val() === null) {
+          alert('Veuillez choisir une remise');
+          // $('button[type="submit"]').prop('disabled', true);
+          return false;
+        }
+        const option = checkDelivery.find(':selected');
+        if (lineAmount != option.data('amount')) {
+          if (!confirm('Le montant de la ligne ne correspond pas à la somme des chèques')) {
+            return false;
+          }
+        }
+        if (checkCount != option.data('count')) {
+          if (!confirm('Le nombre de chèques ne correspond pas à la somme des chèques')) {
+            return false;
+          }
+        }
+        return true;
+      } else {
+        if (getTotal() != lineAmount) {
+          alert('La somme des ventilations doit être égale au montant de la ligne');
+          // $('button[type="submit"]').prop('disabled', true);
+          return false;
+        }
+      }
+      $('button[type="submit"]').prop('disabled', false);
+      return true;
+    }
     function toCurrency(amount) {
       return amount.toFixed(2).toString().replace('.', ',') + ' €';
     }
@@ -120,7 +166,7 @@
       validateForm();
     }
     $(document).ready(function() {
-      $('.breakdown_toggle').change(function() {
+      $('.breakdown_toggle').on('change', function() {
         var value = $(this).val();
         if ($(this).is(':checked')) {
           $('.breakdown-input-' + value).show();
@@ -132,46 +178,7 @@
           $('.breakdown-input-' + value + ' input').val('0,00 €');
         }
       });
-      function getTotal() {
-        let total = 0;
-        $('.breakdown-input').each(function() {
-          let value = $(this).val();
-          value = value.replace(/[^-0-9,]/g, '');
-          value = value.replace(',', '.');
-          value = parseFloat(value);
-          total += value;
-        });
-        return total.toFixed(2);
-      }
-      function validateForm() {
-        const checkDelivery = $('select[name="check_delivery"]');
-        if (checkDelivery.length > 0) {
-          if (checkDelivery.val() === null) {
-            alert('Veuillez choisir une remise');
-            return false;
-          }
-          const option = checkDelivery.find(':selected');
-          if (lineAmount != option.data('amount')) {
-            if (!confirm('Le montant de la ligne ne correspond pas à la somme des chèques')) {
-              return false;
-            }
-          }
-          if (checkCount != option.data('count')) {
-            if (!confirm('Le nombre de chèques ne correspond pas à la somme des chèques')) {
-              return false;
-            }
-          }
-          return true;
-        } else {
-          if (getTotal() != lineAmount) {
-            alert('La somme des ventilations doit être égale au montant de la ligne');
-            return false;
-          }
-        }
-        $('button[type="submit"]').prop('disabled', false);
-        return true;
-      }
-      $('.breakdown-input').change(function() {
+      $('.breakdown-input').on('change', function() {
         validateForm();
       });
       $('form').on("submit", function(event) {
